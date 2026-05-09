@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import AppRoutes from './routes.jsx';
 import SetupGuide from './components/SetupGuide';
+import InstallPrompt from './components/InstallPrompt';
 import { useAuthListener } from '@/features/auth/hooks';
 import { isFirebaseConfigured } from '@/lib/firebase';
 
@@ -17,5 +18,11 @@ export default function App() {
   }, []);
 
   if (!isFirebaseConfigured) return <SetupGuide />;
-  return <AppRoutes />;
+
+  return (
+    <>
+      <AppRoutes />
+      <InstallPrompt />
+    </>
+  );
 }

@@ -23,20 +23,20 @@ export default function Landing() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center">
-      <div className="mb-8">
-        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-primary/15 flex items-center justify-center">
-          <span className="text-3xl">⚽</span>
+      <div className="mb-10">
+        <div className="mx-auto mb-5 h-20 w-20 rounded-3xl bg-primary/15 flex items-center justify-center">
+          <span className="text-5xl">⚽</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">MatchUp</h1>
-        <p className="mt-2 text-muted-foreground">
-          단톡방에 흩어지는 풋살 정보를<br />한 곳에 모아요.
+        <h1 className="text-5xl font-bold tracking-tight">MatchUp</h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          단톡방에 흩어지는 풋살/축구 정보를<br />한곳에서 관리 해보세요 !
         </p>
       </div>
-      <Button size="lg" className="w-full max-w-xs" onClick={handleLogin}>
-        Google로 시작하기
+      <Button size="lg" className="w-full max-w-sm h-14 text-base" onClick={handleLogin}>
+        Google 로 시작하기
       </Button>
-      <p className="mt-6 text-xs text-muted-foreground">
-        모집 투표 · 일정 관리 · 포메이션 · 상대팀 공유
+      <p className="mt-8 text-sm text-muted-foreground">
+        모집 투표 · 일정 관리 · 포메이션 · 상대팀 공유를 한곳에서
       </p>
     </div>
   );

@@ -64,12 +64,12 @@ export default function Groups() {
 
   return (
     <AppShell>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">내 그룹</h1>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-semibold tracking-tight">내 그룹</h1>
         <div className="flex gap-2">
           <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">코드로 참여</Button>
+              <Button variant="outline">코드로 참여</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -95,7 +95,7 @@ export default function Groups() {
 
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button>
                 <Plus className="mr-1 h-4 w-4" /> 새 그룹
               </Button>
             </DialogTrigger>
@@ -123,28 +123,28 @@ export default function Groups() {
       </div>
 
       {loading ? (
-        <p className="text-muted-foreground">불러오는 중…</p>
+        <p className="text-base text-muted-foreground">불러오는 중…</p>
       ) : groups.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Users className="h-10 w-10 text-muted-foreground" />
-            <div>
-              <p className="font-medium">아직 그룹이 없어요</p>
-              <p className="text-sm text-muted-foreground">
+          <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
+            <Users className="h-12 w-12 text-muted-foreground" />
+            <div className="space-y-1">
+              <p className="text-lg font-medium">아직 그룹이 없어요</p>
+              <p className="text-base text-muted-foreground">
                 새 그룹을 만들거나 친구의 초대 코드로 참여하세요.
               </p>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {groups.map((g) => (
             <Link key={g.id} to={`/groups/${g.id}`}>
               <Card className="transition hover:border-primary/50">
                 <CardHeader>
-                  <CardTitle>{g.name}</CardTitle>
+                  <CardTitle className="text-xl">{g.name}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
+                <CardContent className="text-base text-muted-foreground">
                   멤버 {g.memberUids?.length ?? 0}명 · 코드 {g.inviteCode}
                 </CardContent>
               </Card>

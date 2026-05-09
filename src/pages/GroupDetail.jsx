@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { Calendar, Copy, Plus, Vote } from 'lucide-react';
+import { ArrowLeft, Calendar, Copy, Plus, Vote } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import PollCard from '@/components/PollCard';
 import CreatePollDialog from '@/components/CreatePollDialog';
@@ -45,6 +45,15 @@ export default function GroupDetail() {
 
   return (
     <AppShell>
+      <div className="mb-4">
+        <Link
+          to="/groups"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" /> 내 그룹
+        </Link>
+      </div>
+
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{group.name}</h1>
