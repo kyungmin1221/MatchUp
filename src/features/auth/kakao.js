@@ -2,6 +2,7 @@ import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 const KAKAO_SDK_SRC = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js';
+const RETURN_TO_KEY = 'kakaoReturnTo';
 
 let kakaoLoadPromise = null;
 
@@ -37,35 +38,53 @@ function loadKakaoSdk() {
   return kakaoLoadPromise;
 }
 
+export function getKakaoRedirectUri() {
+  return `${window.location.origin}/auth/kakao/callback`;
+}
+
+/** 랜딩에서 호출. 카카오 로그인 페이지로 redirect 시킨다. */
 export async function signInWithKakao() {
   if (!import.meta.env.VITE_KAKAO_JS_KEY) {
     throw new Error('VITE_KAKAO_JS_KEY 환경변수가 설정되지 않았어요.');
   }
   const Kakao = await loadKakaoSdk();
-
-  // 카카오 로그인 (popup)
-  const tokenResult = await new Promise((resolve, reject) => {
-    Kakao.Auth.login({
-      success: resolve,
-      fail: reject,
-      scope: 'profile_nickname,profile_image'
-    });
+  // 콜백 후 돌아갈 위치 저장
+  try {
+    sessionStorage.setItem(RETURN_TO_KEY, '/groups');
+  } catch {
+    /* private mode 등 */
+  }
+  Kakao.Auth.authorize({
+    redirectUri: getKakaoRedirectUri(),
+    scope: 'profile_nickname,profile_image'
   });
+  // 이 시점부터 페이지가 카카오로 redirect 됨
+}
 
-  // 서버로 access_token 보내고 Firebase Custom Token 받기
+/** /auth/kakao/callback 페이지에서 호출. 인가 코드를 서버에 보내고 Firebase 로그인 마무리. */
+export async function exchangeKakaoCode(code) {
   const res = await fetch('/api/kakao-auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ accessToken: tokenResult.access_token })
+    body: JSON.stringify({ code, redirectUri: getKakaoRedirectUri() })
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? '서버 인증 실패');
   }
   const { customToken } = await res.json();
-
   const cred = await signInWithCustomToken(auth, customToken);
   return cred.user;
+}
+
+export function popKakaoReturnTo() {
+  try {
+    const v = sessionStorage.getItem(RETURN_TO_KEY) || '/groups';
+    sessionStorage.removeItem(RETURN_TO_KEY);
+    return v;
+  } catch {
+    return '/groups';
+  }
 }
 
 export async function signOutFromKakao() {

@@ -4,6 +4,7 @@ import Groups from './pages/Groups';
 import GroupDetail from './pages/GroupDetail';
 import MatchDetail from './pages/MatchDetail';
 import Join from './pages/Join';
+import KakaoCallback from './pages/KakaoCallback';
 import ProtectedRoute from './components/ProtectedRoute';
 
 export default function AppRoutes() {
@@ -11,6 +12,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/join" element={<Join />} />
+      <Route path="/auth/kakao/callback" element={<KakaoCallback />} />
       <Route
         path="/groups"
         element={
