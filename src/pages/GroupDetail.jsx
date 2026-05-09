@@ -57,7 +57,9 @@ export default function GroupDetail() {
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{group.name}</h1>
-          <p className="text-sm text-muted-foreground">멤버 {group.memberUids.length}명</p>
+          <p className="text-sm text-muted-foreground">
+            멤버 {group.memberUids.length}명
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={copyInvite}>
           <Copy className="mr-1 h-4 w-4" /> 초대 링크
@@ -66,7 +68,10 @@ export default function GroupDetail() {
 
       <div className="mb-6 flex flex-wrap gap-2">
         {members.map((m) => (
-          <div key={m.id} className="flex items-center gap-1.5 rounded-full bg-secondary px-2 py-1 text-xs">
+          <div
+            key={m.id}
+            className="flex items-center gap-1.5 rounded-full bg-secondary px-2 py-1 text-xs"
+          >
             <Avatar src={m.photoURL} name={m.displayName} size={18} />
             <span>{m.displayName}</span>
           </div>
@@ -130,11 +135,13 @@ export default function GroupDetail() {
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-base">{m.title}</CardTitle>
-                      {m.opponentMatchId && <Badge variant="default">상대팀 연결</Badge>}
+                      {m.opponentMatchId && (
+                        <Badge variant="default">상대팀 연결</Badge>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="text-sm text-muted-foreground">
-                    {m.scheduledAt && <p>📅 {formatDateTime(m.scheduledAt)}</p>}
+                    {m.scheduledAt && <p> {formatDateTime(m.scheduledAt)}</p>}
                     {m.location && <p>📍 {m.location}</p>}
                     <p>👥 {m.homeTeam.playerUids.length}명 참가</p>
                   </CardContent>

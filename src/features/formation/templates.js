@@ -56,6 +56,78 @@ export const FORMATIONS = {
       { role: 'ST', x: 62, y: 82 }
     ]
   },
+  '4-2-3-1': {
+    label: '4-2-3-1',
+    kind: 'football',
+    size: 11,
+    positions: [
+      { role: 'GK', x: 50, y: 8 },
+      { role: 'LB', x: 15, y: 26 },
+      { role: 'CB', x: 38, y: 24 },
+      { role: 'CB', x: 62, y: 24 },
+      { role: 'RB', x: 85, y: 26 },
+      { role: 'DM', x: 38, y: 46 },
+      { role: 'DM', x: 62, y: 46 },
+      { role: 'LAM', x: 20, y: 66 },
+      { role: 'CAM', x: 50, y: 70 },
+      { role: 'RAM', x: 80, y: 66 },
+      { role: 'ST', x: 50, y: 88 }
+    ]
+  },
+  '3-4-3': {
+    label: '3-4-3',
+    kind: 'football',
+    size: 11,
+    positions: [
+      { role: 'GK', x: 50, y: 8 },
+      { role: 'CB', x: 25, y: 24 },
+      { role: 'CB', x: 50, y: 22 },
+      { role: 'CB', x: 75, y: 24 },
+      { role: 'LM', x: 15, y: 52 },
+      { role: 'CM', x: 38, y: 50 },
+      { role: 'CM', x: 62, y: 50 },
+      { role: 'RM', x: 85, y: 52 },
+      { role: 'LW', x: 22, y: 80 },
+      { role: 'ST', x: 50, y: 84 },
+      { role: 'RW', x: 78, y: 80 }
+    ]
+  },
+  '5-3-2': {
+    label: '5-3-2',
+    kind: 'football',
+    size: 11,
+    positions: [
+      { role: 'GK', x: 50, y: 8 },
+      { role: 'LWB', x: 12, y: 28 },
+      { role: 'CB', x: 30, y: 24 },
+      { role: 'CB', x: 50, y: 22 },
+      { role: 'CB', x: 70, y: 24 },
+      { role: 'RWB', x: 88, y: 28 },
+      { role: 'CM', x: 30, y: 52 },
+      { role: 'CM', x: 50, y: 56 },
+      { role: 'CM', x: 70, y: 52 },
+      { role: 'ST', x: 38, y: 82 },
+      { role: 'ST', x: 62, y: 82 }
+    ]
+  },
+  '4-1-4-1': {
+    label: '4-1-4-1',
+    kind: 'football',
+    size: 11,
+    positions: [
+      { role: 'GK', x: 50, y: 8 },
+      { role: 'LB', x: 15, y: 26 },
+      { role: 'CB', x: 38, y: 24 },
+      { role: 'CB', x: 62, y: 24 },
+      { role: 'RB', x: 85, y: 26 },
+      { role: 'DM', x: 50, y: 45 },
+      { role: 'LM', x: 15, y: 62 },
+      { role: 'CM', x: 38, y: 60 },
+      { role: 'CM', x: 62, y: 60 },
+      { role: 'RM', x: 85, y: 62 },
+      { role: 'ST', x: 50, y: 85 }
+    ]
+  },
   'futsal-1-2-1': {
     label: '1-2-1',
     kind: 'futsal',

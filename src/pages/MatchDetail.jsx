@@ -117,7 +117,7 @@ export default function MatchDetail() {
         <div>
           <h1 className="text-2xl font-semibold">{match.title}</h1>
           <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
-            {match.scheduledAt && <p>📅 {formatDateTime(match.scheduledAt)}</p>}
+            {match.scheduledAt && <p>{formatDateTime(match.scheduledAt)}</p>}
             {match.location && <p>📍 {match.location}</p>}
           </div>
         </div>
