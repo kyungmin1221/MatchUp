@@ -1,13 +1,13 @@
 import { useEffect, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Share2 } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Share2, Trash2 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import TeamPanel from '@/components/TeamPanel';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/features/auth/hooks';
 import { useGroup, useMembers } from '@/features/group/hooks';
 import { useMatch } from '@/features/match/hooks';
-import { togglePlayer, updateFormation } from '@/features/match/api';
+import { deleteMatch, togglePlayer, updateFormation } from '@/features/match/api';
 import {
   DEFAULT_FORMATION,
   buildFormation,
@@ -18,11 +18,14 @@ import { formatDateTime } from '@/lib/utils';
 export default function MatchDetail() {
   const { groupId, matchId } = useParams();
   const user = useUser();
+  const navigate = useNavigate();
 
   const { match, loading } = useMatch(matchId);
   const { match: opponent } = useMatch(match?.opponentMatchId);
 
+  const { group: ourGroup } = useGroup(match?.groupId);
   const { group: oppGroup } = useGroup(opponent?.groupId);
+  const isOwner = !!user && ourGroup?.ownerUid === user.uid;
 
   const myPlayerUids = match?.homeTeam.playerUids ?? [];
   const oppPlayerUids = opponent?.homeTeam.playerUids ?? [];
@@ -74,6 +77,16 @@ export default function MatchDetail() {
     alert('상대팀 합류 링크를 복사했어요!');
   };
 
+  const handleDeleteMatch = async () => {
+    if (!confirm('이 매치를 삭제할까요? 되돌릴 수 없어요.')) return;
+    try {
+      await deleteMatch({ matchId });
+      navigate(`/groups/${groupId}`, { replace: true });
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
   if (loading) {
     return (
       <AppShell>
@@ -108,14 +121,26 @@ export default function MatchDetail() {
             {match.location && <p>📍 {match.location}</p>}
           </div>
         </div>
-        {opponent && oppGroup && (
-          <Button variant="outline" size="sm" onClick={copyOpponentJoinLink}>
-            <Share2 className="mr-1 h-4 w-4" /> 상대팀 합류 링크
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {opponent && oppGroup && (
+            <Button variant="outline" size="sm" onClick={copyOpponentJoinLink}>
+              <Share2 className="mr-1 h-4 w-4" /> 상대팀 합류 링크
+            </Button>
+          )}
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDeleteMatch}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> 매치 삭제
+            </Button>
+          )}
+        </div>
       </div>
 
-      <div className={`grid gap-4 ${match.opponentMatchId ? 'sm:grid-cols-2' : ''}`}>
+      <div className="grid gap-4 sm:grid-cols-2">
         <TeamPanel
           match={match}
           players={myPlayers}

@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
@@ -57,4 +58,8 @@ export function subscribeGroupPolls(groupId, cb) {
     items.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
     cb(items);
   });
+}
+
+export async function deletePoll({ pollId }) {
+  await deleteDoc(doc(db, 'polls', pollId));
 }

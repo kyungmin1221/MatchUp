@@ -11,6 +11,10 @@ service cloud.firestore {
       return request.auth.uid;
     }
 
+    function groupOwner(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data.ownerUid;
+    }
+
     // users: 본인 문서만 쓰기, 모든 로그인 사용자 읽기 가능 (아바타/이름 표시용)
     match /users/{userId} {
       allow read: if isSignedIn();
@@ -32,7 +36,7 @@ service cloud.firestore {
       allow delete: if isSignedIn() && uid() == resource.data.ownerUid;
     }
 
-    // polls: 그룹 멤버만 접근
+    // polls: 그룹 멤버만 접근, 삭제는 그룹 owner만
     match /polls/{pollId} {
       function pollGroupMembers() {
         return get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.memberUids;
@@ -41,10 +45,10 @@ service cloud.firestore {
       allow create: if isSignedIn() &&
         uid() in get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.memberUids;
       allow update: if isSignedIn() && uid() in pollGroupMembers();
-      allow delete: if isSignedIn() && uid() == resource.data.createdBy;
+      allow delete: if isSignedIn() && uid() == groupOwner(resource.data.groupId);
     }
 
-    // matches: 그룹 멤버 + 상대팀 매치로 연결된 사용자 read 가능
+    // matches: 그룹 멤버 + 상대팀 매치로 연결된 사용자 read 가능, 삭제는 그룹 owner만
     match /matches/{matchId} {
       function homeMembers() {
         return get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data.memberUids;
@@ -58,8 +62,8 @@ service cloud.firestore {
       allow read: if isSignedIn() && (uid() in homeMembers() || uid() in opponentMembers());
       allow create: if isSignedIn() &&
         uid() in get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.memberUids;
-      allow update: if isSignedIn() && uid() in homeMembers();
-      allow delete: if isSignedIn() && uid() == resource.data.createdBy;
+      allow update: if isSignedIn() && (uid() in homeMembers() || uid() in opponentMembers());
+      allow delete: if isSignedIn() && uid() == groupOwner(resource.data.groupId);
     }
   }
 }

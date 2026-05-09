@@ -3,6 +3,7 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -177,4 +178,20 @@ export async function unlinkOpponent({ ourMatchId, opponentMatchId }) {
     tx.update(ourRef, { opponentMatchId: null });
     tx.update(oppRef, { opponentMatchId: null });
   });
+}
+
+// 매치 삭제. 상대팀 매치가 연결되어 있으면 그쪽의 opponentMatchId만 끊고 우리 매치만 삭제.
+export async function deleteMatch({ matchId }) {
+  const ref = doc(db, 'matches', matchId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data();
+  if (data.opponentMatchId) {
+    try {
+      await updateDoc(doc(db, 'matches', data.opponentMatchId), { opponentMatchId: null });
+    } catch {
+      /* 상대 매치가 이미 사라졌거나 권한이 없어도 무시하고 우리 매치는 삭제 */
+    }
+  }
+  await deleteDoc(ref);
 }

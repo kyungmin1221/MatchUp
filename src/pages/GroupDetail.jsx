@@ -23,8 +23,9 @@ export default function GroupDetail() {
   const copyInvite = async () => {
     if (!group) return;
     const url = `${window.location.origin}/join?code=${group.inviteCode}`;
-    await navigator.clipboard.writeText(url);
-    alert('초대 링크를 복사했어요!');
+    const text = `[MatchUp] "${group.name}" 그룹에 초대합니다.\n초대 코드: ${group.inviteCode}\n앱 열기: ${url}`;
+    await navigator.clipboard.writeText(text);
+    alert('초대 메시지를 복사했어요. 친구에게 붙여넣기해서 보내주세요.');
   };
 
   if (loading) {
@@ -86,7 +87,7 @@ export default function GroupDetail() {
         ) : (
           <div className="space-y-3">
             {polls.map((p) => (
-              <PollCard key={p.id} poll={p} />
+              <PollCard key={p.id} poll={p} group={group} />
             ))}
           </div>
         )}

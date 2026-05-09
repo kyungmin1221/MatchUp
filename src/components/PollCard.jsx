@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
+import { Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { useUser } from '@/features/auth/hooks';
 import { useMembers } from '@/features/group/hooks';
-import { votePoll } from '@/features/poll/api';
+import { deletePoll, votePoll } from '@/features/poll/api';
 import { cn, formatDateTime } from '@/lib/utils';
 
-export default function PollCard({ poll }) {
+export default function PollCard({ poll, group }) {
   const user = useUser();
+  const isOwner = !!user && group?.ownerUid === user.uid;
   const allVoterUids = useMemo(
     () => Array.from(new Set(poll.options.flatMap((o) => o.voterUids ?? []))),
     [poll]
@@ -28,12 +31,34 @@ export default function PollCard({ poll }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('이 투표를 삭제할까요? 되돌릴 수 없어요.')) return;
+    try {
+      await deletePoll({ pollId: poll.id });
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{poll.title}</CardTitle>
-          {closed ? <Badge variant="outline">마감</Badge> : <Badge>{poll.multi ? '복수' : '단일'}</Badge>}
+          <div className="flex items-center gap-1.5">
+            {closed ? <Badge variant="outline">마감</Badge> : <Badge>{poll.multi ? '복수' : '단일'}</Badge>}
+            {isOwner && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={handleDelete}
+                aria-label="투표 삭제"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         {poll.closesAt && (
           <p className="text-xs text-muted-foreground">마감: {formatDateTime(poll.closesAt)}</p>

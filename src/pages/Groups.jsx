@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Plus, Users } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
@@ -20,19 +20,30 @@ import { createGroup, joinGroup } from '@/features/group/api';
 
 export default function Groups() {
   const user = useUser();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { groups, loading } = useMyGroups();
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
 
+  // 초대 링크에서 넘어온 경우 코드 입력 다이얼로그 자동 오픈 (코드는 비워둔 채)
+  useEffect(() => {
+    if (location.state?.openJoinDialog) {
+      setJoinOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
     try {
-      await createGroup({ name: name.trim(), ownerUid: user.uid });
+      const groupId = await createGroup({ name: name.trim(), ownerUid: user.uid });
       setCreateOpen(false);
       setName('');
+      navigate(`/groups/${groupId}`);
     } catch (err) {
       alert(err.message);
     }
@@ -42,9 +53,10 @@ export default function Groups() {
     e.preventDefault();
     if (!code.trim()) return;
     try {
-      await joinGroup({ inviteCode: code.trim().toUpperCase(), uid: user.uid });
+      const groupId = await joinGroup({ inviteCode: code.trim().toUpperCase(), uid: user.uid });
       setJoinOpen(false);
       setCode('');
+      navigate(`/groups/${groupId}`);
     } catch (err) {
       alert(err.message);
     }
