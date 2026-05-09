@@ -1,0 +1,135 @@
+import { useEffect, useMemo } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Share2 } from 'lucide-react';
+import AppShell from '@/components/AppShell';
+import TeamPanel from '@/components/TeamPanel';
+import { Button } from '@/components/ui/button';
+import { useUser } from '@/features/auth/hooks';
+import { useGroup, useMembers } from '@/features/group/hooks';
+import { useMatch } from '@/features/match/hooks';
+import { togglePlayer, updateFormation } from '@/features/match/api';
+import {
+  DEFAULT_FORMATION,
+  buildFormation,
+  formationsByKind
+} from '@/features/formation/templates';
+import { formatDateTime } from '@/lib/utils';
+
+export default function MatchDetail() {
+  const { groupId, matchId } = useParams();
+  const user = useUser();
+
+  const { match, loading } = useMatch(matchId);
+  const { match: opponent } = useMatch(match?.opponentMatchId);
+
+  const { group: oppGroup } = useGroup(opponent?.groupId);
+
+  const myPlayerUids = match?.homeTeam.playerUids ?? [];
+  const oppPlayerUids = opponent?.homeTeam.playerUids ?? [];
+  const { data: myPlayers = [] } = useMembers(myPlayerUids);
+  const { data: oppPlayers = [] } = useMembers(oppPlayerUids);
+
+  const matchKind = match?.kind ?? 'football';
+  const formationOptions = useMemo(() => formationsByKind(matchKind), [matchKind]);
+
+  // 우리 매치에 포메이션 슬롯이 비어 있거나 종목과 안 맞으면 자동 채움
+  const myFormation = match?.homeTeam.formation;
+  useEffect(() => {
+    if (!match) return;
+    const isValidType = formationOptions.some(([key]) => key === myFormation?.type);
+    if (!myFormation?.positions?.length || !isValidType) {
+      const nextType = isValidType ? myFormation.type : DEFAULT_FORMATION[matchKind];
+      updateFormation({ matchId, formation: buildFormation(nextType) });
+    }
+  }, [match, myFormation, matchId, matchKind, formationOptions]);
+
+  // 상대팀 매치에 캡틴이 합류했는데 포메이션이 비었으면 슬롯 자동 채움 (편집권자만)
+  const oppFormation = opponent?.homeTeam.formation;
+  useEffect(() => {
+    if (!opponent || !user) return;
+    // 상대 매치를 편집할 권한이 있어야 함 (= 상대팀 그룹 멤버여야 함)
+    // 새도우 그룹은 우리도 멤버라 update 가능하지만, 의도적으로 상대 매치는 건드리지 않는다.
+    // → 빈 포메이션 자동 채우기는 캡틴(=상대팀)이 자기 매치 페이지에 진입했을 때만 실행되도록 우리는 패스.
+  }, [opponent, oppFormation, user]);
+
+  const isParticipant = !!user && myPlayerUids.includes(user.uid);
+
+  const handleToggleJoin = async () => {
+    if (!user) return;
+    await togglePlayer({ matchId, uid: user.uid, join: !isParticipant });
+  };
+
+  const handleFormationType = async (type) => {
+    await updateFormation({ matchId, formation: buildFormation(type) });
+  };
+
+  const handleFormationChange = async (next) => {
+    await updateFormation({ matchId, formation: next });
+  };
+
+  const copyOpponentJoinLink = async () => {
+    if (!opponent || !oppGroup) return;
+    const url = `${window.location.origin}/join?code=${oppGroup.inviteCode}&matchId=${opponent.id}`;
+    await navigator.clipboard.writeText(url);
+    alert('상대팀 합류 링크를 복사했어요!');
+  };
+
+  if (loading) {
+    return (
+      <AppShell>
+        <p className="text-muted-foreground">불러오는 중…</p>
+      </AppShell>
+    );
+  }
+  if (!match) {
+    return (
+      <AppShell>
+        <p>매치를 찾을 수 없어요.</p>
+      </AppShell>
+    );
+  }
+
+  return (
+    <AppShell>
+      <div className="mb-4">
+        <Link
+          to={`/groups/${groupId}`}
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" /> 그룹으로
+        </Link>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">{match.title}</h1>
+          <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
+            {match.scheduledAt && <p>📅 {formatDateTime(match.scheduledAt)}</p>}
+            {match.location && <p>📍 {match.location}</p>}
+          </div>
+        </div>
+        {opponent && oppGroup && (
+          <Button variant="outline" size="sm" onClick={copyOpponentJoinLink}>
+            <Share2 className="mr-1 h-4 w-4" /> 상대팀 합류 링크
+          </Button>
+        )}
+      </div>
+
+      <div className={`grid gap-4 ${match.opponentMatchId ? 'sm:grid-cols-2' : ''}`}>
+        <TeamPanel
+          match={match}
+          players={myPlayers}
+          isMine
+          isParticipant={isParticipant}
+          onToggleJoin={handleToggleJoin}
+          onFormationChange={handleFormationChange}
+          onFormationType={handleFormationType}
+          formationOptions={formationOptions}
+        />
+        {match.opponentMatchId && (
+          <TeamPanel match={opponent} players={oppPlayers} isMine={false} />
+        )}
+      </div>
+    </AppShell>
+  );
+}
