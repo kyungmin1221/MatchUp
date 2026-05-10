@@ -7,6 +7,24 @@ import { signInWithKakao } from '@/features/auth/kakao';
 import { joinMatchByCode } from '@/features/match/api';
 import { GoogleIcon, KakaoIcon } from '@/components/BrandIcons';
 
+const LAST_PROVIDER_KEY = 'matchup.lastLoginProvider';
+
+function getLastProvider() {
+  try {
+    return localStorage.getItem(LAST_PROVIDER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setLastProvider(p) {
+  try {
+    localStorage.setItem(LAST_PROVIDER_KEY, p);
+  } catch {
+    /* noop */
+  }
+}
+
 export default function MatchInvite() {
   const [params] = useSearchParams();
   const code = params.get('code');
@@ -15,7 +33,8 @@ export default function MatchInvite() {
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
-  const [pending, setPending] = useState(null); // 'google' | 'kakao' | null
+  const [pending, setPending] = useState(null);
+  const [lastProvider] = useState(() => getLastProvider());
   const ranRef = useRef(false);
 
   useEffect(() => {
@@ -32,9 +51,9 @@ export default function MatchInvite() {
 
   const handleGoogle = async () => {
     setPending('google');
+    setLastProvider('google');
     try {
       await signInWithGoogle();
-      // signInWithPopup 성공 후엔 useEffect 가 자동으로 합류 처리
     } catch (e) {
       console.error(e);
       alert('Google 로그인에 실패했어요.');
@@ -45,11 +64,10 @@ export default function MatchInvite() {
 
   const handleKakao = async () => {
     setPending('kakao');
+    setLastProvider('kakao');
     try {
-      // 콜백 후 다시 이 페이지로 돌아오도록 returnTo 지정
       const returnTo = window.location.pathname + window.location.search;
       await signInWithKakao({ returnTo });
-      // 이 시점에 카카오로 redirect — 코드 더는 실행 안 됨
     } catch (e) {
       console.error(e);
       alert(e?.message ?? '카카오 로그인에 실패했어요.');
@@ -75,32 +93,69 @@ export default function MatchInvite() {
 
   if (!user) {
     return (
-      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-2xl font-bold">대항전 매치에 초대받았어요!</h1>
-        <p className="mt-2 text-muted-foreground">
-          로그인하면 자동으로 매치에 합류해요.
-        </p>
+      <div className="min-h-[100dvh] flex flex-col items-center justify-between bg-white px-6 py-14 text-black">
+        <div className="flex-1" />
 
-        <div className="mt-6 w-full max-w-sm space-y-3">
-          <button
-            type="button"
-            onClick={handleGoogle}
-            disabled={!!pending}
-            className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-md bg-white text-[#1f1f1f] text-base font-medium ring-1 ring-black/10 hover:bg-gray-50 transition disabled:opacity-60"
+        {/* 메시지 */}
+        <div className="text-center">
+          <h1
+            className="text-5xl font-black italic tracking-tighter"
+            style={{
+              fontFamily: '"Pretendard", -apple-system, BlinkMacSystemFont, sans-serif'
+            }}
           >
-            <GoogleIcon className="h-5 w-5" />
-            {pending === 'google' ? '로그인 중…' : 'Google 로 시작하기'}
-          </button>
-          <button
-            type="button"
-            onClick={handleKakao}
-            disabled={!!pending}
-            className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-md bg-[#FEE500] text-[#191919] text-base font-semibold hover:brightness-95 transition disabled:opacity-60"
-          >
-            <KakaoIcon className="h-5 w-5" />
-            {pending === 'kakao' ? '로그인 중…' : '카카오로 시작하기'}
-          </button>
+            MatchUp
+          </h1>
+          <p className="mt-6 text-base text-gray-700 font-medium">
+            대항전 매치에 초대받았어요!
+          </p>
+          <p className="mt-2 text-sm text-gray-500">
+            로그인하면 자동으로 매치에 합류해요.
+          </p>
         </div>
+
+        <div className="flex-1" />
+
+        {/* 로그인 버튼 — 카카오 먼저 */}
+        <div className="w-full max-w-sm space-y-3">
+          <div className="relative">
+            {lastProvider === 'kakao' && (
+              <span className="absolute -top-3 right-4 z-10 rounded-full bg-emerald-400 px-2.5 py-0.5 text-[11px] font-medium text-white shadow">
+                최근 로그인
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleKakao}
+              disabled={!!pending}
+              className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-xl bg-[#FEE500] text-[#191919] text-base font-bold hover:brightness-95 transition disabled:opacity-60"
+            >
+              <KakaoIcon className="h-5 w-5" />
+              {pending === 'kakao' ? '로그인 중…' : '카카오로 3초만에 합류하기'}
+            </button>
+          </div>
+
+          <div className="relative">
+            {lastProvider === 'google' && (
+              <span className="absolute -top-3 right-4 z-10 rounded-full bg-emerald-400 px-2.5 py-0.5 text-[11px] font-medium text-white shadow">
+                최근 로그인
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleGoogle}
+              disabled={!!pending}
+              className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-xl bg-white text-[#1f1f1f] text-base font-medium ring-1 ring-black/15 hover:bg-gray-50 transition disabled:opacity-60"
+            >
+              <GoogleIcon className="h-5 w-5" />
+              {pending === 'google' ? '로그인 중…' : 'Google로 합류하기'}
+            </button>
+          </div>
+        </div>
+
+        <p className="mt-10 text-xs text-gray-400">
+          매치 코드 <span className="font-mono">{code}</span>
+        </p>
       </div>
     );
   }
