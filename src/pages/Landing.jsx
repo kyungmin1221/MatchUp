@@ -67,14 +67,16 @@ export default function Landing() {
       <div className="text-center">
         <h1
           className="text-7xl font-black italic tracking-tighter"
-          style={{ fontFamily: '"Pretendard", -apple-system, BlinkMacSystemFont, sans-serif' }}
+          style={{
+            fontFamily:
+              '"Pretendard", -apple-system, BlinkMacSystemFont, sans-serif',
+          }}
         >
           MatchUp
         </h1>
         <p className="mt-6 text-base text-gray-500">
-          단톡에 흩어진 풋살 약속,
-          <br />
-          한 페이지로 다시 모아요.
+          단톡에 흩어진 풋살 & 축구 약속,
+          <br />한 페이지로 다시 모아요.
         </p>
       </div>
 

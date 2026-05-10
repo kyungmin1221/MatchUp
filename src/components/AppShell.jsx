@@ -20,8 +20,7 @@ export default function AppShell({ children }) {
     <div className="min-h-screen min-h-[100dvh] flex flex-col">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur safe-top">
         <div className="container flex h-14 items-center justify-between">
-          <Link to="/groups" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="inline-block h-6 w-6 rounded bg-primary" />
+          <Link to="/groups" className="font-semibold tracking-tight">
             MatchUp
           </Link>
           {user && (
@@ -37,7 +36,12 @@ export default function AppShell({ children }) {
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {user.displayName}
               </span>
-              <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="로그아웃">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+                aria-label="로그아웃"
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
