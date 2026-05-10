@@ -36,21 +36,21 @@ export function usePoll(pollId) {
 }
 
 // 매치의 모집 투표를 polls.matchId 로 찾는다. recruitingPollId 캐시가 stale 해도 자동 복구.
-export function useRecruitingPollByMatch(matchId) {
+export function useRecruitingPollByMatch({ groupId, matchId }) {
   const [poll, setPoll] = useState(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    if (!matchId) {
+    if (!groupId || !matchId) {
       setPoll(null);
       setLoading(false);
       return undefined;
     }
     setLoading(true);
-    const unsub = subscribePollByMatch(matchId, (p) => {
+    const unsub = subscribePollByMatch({ groupId, matchId }, (p) => {
       setPoll(p);
       setLoading(false);
     });
     return unsub;
-  }, [matchId]);
+  }, [groupId, matchId]);
   return { poll, loading };
 }

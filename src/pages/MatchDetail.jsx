@@ -35,7 +35,10 @@ export default function MatchDetail() {
   const isOwner = !!user && ourGroup?.ownerUid === user.uid;
 
   // polls.matchId 가 source of truth. 매치의 recruitingPollId 캐시가 stale 해도 자동으로 폴을 찾는다.
-  const { poll: recruitingPoll } = useRecruitingPollByMatch(matchId);
+  const { poll: recruitingPoll } = useRecruitingPollByMatch({
+    groupId: match?.groupId,
+    matchId
+  });
 
   const myPlayerUids = match?.homeTeam.playerUids ?? [];
   const oppPlayerUids = opponent?.homeTeam.playerUids ?? [];

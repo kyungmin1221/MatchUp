@@ -108,16 +108,32 @@ export function subscribePoll(pollId, cb) {
 }
 
 // 매치의 모집 투표를 폴의 matchId 필드로 찾는다 (source of truth).
-export function subscribePollByMatch(matchId, cb) {
-  const q = query(collection(db, 'polls'), where('matchId', '==', matchId));
-  return onSnapshot(q, (snap) => {
-    if (snap.empty) {
+// groupId 조건을 함께 넣어 Firestore 보안 규칙과 일치시킨다.
+export function subscribePollByMatch({ groupId, matchId }, cb) {
+  if (!groupId || !matchId) {
+    cb(null);
+    return () => {};
+  }
+  const q = query(
+    collection(db, 'polls'),
+    where('groupId', '==', groupId),
+    where('matchId', '==', matchId)
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      if (snap.empty) {
+        cb(null);
+        return;
+      }
+      const d = snap.docs[0];
+      cb({ id: d.id, ...d.data() });
+    },
+    (err) => {
+      console.error('[subscribePollByMatch] error', err);
       cb(null);
-      return;
     }
-    const d = snap.docs[0];
-    cb({ id: d.id, ...d.data() });
-  });
+  );
 }
 
 export function subscribeGroupPolls(groupId, cb) {
