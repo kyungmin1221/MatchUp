@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Users } from 'lucide-react';
+import { BookOpen, Plus, Users } from 'lucide-react';
 import AppShell from '@/components/AppShell';
+import IntroDialog from '@/components/IntroDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ export default function Groups() {
   const { groups, loading } = useMyGroups();
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
+  const [introOpen, setIntroOpen] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
 
@@ -66,7 +68,10 @@ export default function Groups() {
     <AppShell>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold tracking-tight">내 그룹</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setIntroOpen(true)}>
+            <BookOpen className="mr-1 h-4 w-4" /> 가이드
+          </Button>
           <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">코드로 참여</Button>
@@ -152,6 +157,8 @@ export default function Groups() {
           ))}
         </div>
       )}
+
+      <IntroDialog open={introOpen} onOpenChange={setIntroOpen} />
     </AppShell>
   );
 }

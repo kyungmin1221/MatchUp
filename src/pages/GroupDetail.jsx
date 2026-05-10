@@ -1,10 +1,20 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Copy, LogOut, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookOpen,
+  Calendar,
+  Copy,
+  LogOut,
+  MessageSquare,
+  Plus,
+  Trash2
+} from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import PollCard from '@/components/PollCard';
 import CreatePollDialog from '@/components/CreatePollDialog';
 import CreateMatchDialog from '@/components/CreateMatchDialog';
+import IntroDialog, { hasSeenIntro, markIntroSeen } from '@/components/IntroDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
@@ -37,6 +47,15 @@ export default function GroupDetail() {
   const { data: members = [] } = useMembers(group?.memberUids);
 
   const isOwner = !!user && group?.ownerUid === user.uid;
+
+  // 처음 그룹에 들어온 사용자에게 한 번만 자동으로 가이드를 띄움
+  const [introOpen, setIntroOpen] = useState(false);
+  useEffect(() => {
+    if (!hasSeenIntro()) {
+      setIntroOpen(true);
+      markIntroSeen();
+    }
+  }, []);
 
   const copyInvite = async () => {
     if (!group) return;
@@ -107,6 +126,9 @@ export default function GroupDetail() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIntroOpen(true)}>
+            <BookOpen className="mr-1 h-4 w-4" /> 가이드
+          </Button>
           <Button variant="outline" size="sm" onClick={copyInvite}>
             <Copy className="mr-1 h-4 w-4" /> 초대 링크
           </Button>
@@ -226,6 +248,8 @@ export default function GroupDetail() {
           </div>
         )}
       </section>
+
+      <IntroDialog open={introOpen} onOpenChange={setIntroOpen} />
     </AppShell>
   );
 }
