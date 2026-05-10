@@ -165,7 +165,7 @@ export default function Groups() {
       {awayMatches.length > 0 && (
         <section className="mt-10">
           <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-            <Swords className="h-5 w-5" /> 참여 중인 대항전
+            <Swords className="h-5 w-5" /> 대결 요청
           </h2>
           <p className="mb-3 text-xs text-muted-foreground">
             다른 그룹의 매치에 상대팀으로 합류한 매치들이에요.
