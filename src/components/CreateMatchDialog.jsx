@@ -12,28 +12,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUser } from '@/features/auth/hooks';
-import {
-  createMatch,
-  createMatchFromPoll,
-  createMatchWithOpponent
-} from '@/features/match/api';
+import { createMatch, createMatchFromPoll } from '@/features/match/api';
 import { cn } from '@/lib/utils';
 
-export default function CreateMatchDialog({ groupId, trigger, fromPoll = null, open: openProp, onOpenChange }) {
+export default function CreateMatchDialog({
+  groupId,
+  trigger,
+  fromPoll = null,
+  open: openProp,
+  onOpenChange
+}) {
   const user = useUser();
   const navigate = useNavigate();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
 
-  const [kind, setKind] = useState('football'); // 'football' | 'futsal'
+  const [kind, setKind] = useState('football');
   const [title, setTitle] = useState(fromPoll?.title ?? '');
   const [scheduledAt, setScheduledAt] = useState('');
   const [location, setLocation] = useState('');
   const [teamName, setTeamName] = useState('');
   const [opponentTeamName, setOpponentTeamName] = useState('');
   const [withOpponent, setWithOpponent] = useState(true);
-  // fromPoll 이 있으면 모집 투표가 이미 존재하므로 새로 만들지 않음
   const [withRecruiting, setWithRecruiting] = useState(!fromPoll);
   const [submitting, setSubmitting] = useState(false);
 
@@ -45,48 +46,27 @@ export default function CreateMatchDialog({ groupId, trigger, fromPoll = null, o
     }
     setSubmitting(true);
     try {
-      let ourMatchId;
+      const common = {
+        groupId,
+        title: title.trim(),
+        scheduledAt: scheduledAt || null,
+        location: location.trim(),
+        teamName: teamName.trim() || '우리 팀',
+        opponentTeamName: opponentTeamName.trim() || '상대팀',
+        withOpponent,
+        kind,
+        createdBy: user.uid
+      };
+
+      let ref;
       if (fromPoll) {
-        // 기존 모집 투표 → 매치 변환 흐름
-        const ref = await createMatchFromPoll({
-          poll: fromPoll,
-          groupId,
-          title: title.trim(),
-          scheduledAt: scheduledAt || null,
-          location: location.trim(),
-          teamName: teamName.trim() || '우리 팀',
-          kind,
-          createdBy: user.uid
-        });
-        ourMatchId = ref.id;
-      } else if (withOpponent) {
-        const r = await createMatchWithOpponent({
-          groupId,
-          title: title.trim(),
-          scheduledAt: scheduledAt || null,
-          location: location.trim(),
-          teamName: teamName.trim() || '우리 팀',
-          opponentTeamName: opponentTeamName.trim() || '상대팀',
-          kind,
-          recruiting: withRecruiting,
-          createdBy: user.uid
-        });
-        ourMatchId = r.ourMatchId;
+        ref = await createMatchFromPoll({ poll: fromPoll, ...common });
       } else {
-        const ref = await createMatch({
-          groupId,
-          title: title.trim(),
-          scheduledAt: scheduledAt || null,
-          location: location.trim(),
-          teamName: teamName.trim() || '우리 팀',
-          kind,
-          recruiting: withRecruiting,
-          createdBy: user.uid
-        });
-        ourMatchId = ref.id;
+        ref = await createMatch({ ...common, recruiting: withRecruiting });
       }
+
       setOpen(false);
-      navigate(`/groups/${groupId}/matches/${ourMatchId}`);
+      navigate(`/groups/${groupId}/matches/${ref.id}`);
     } catch (err) {
       alert(err.message);
     } finally {
@@ -186,24 +166,23 @@ export default function CreateMatchDialog({ groupId, trigger, fromPoll = null, o
             </label>
           )}
 
-          {!fromPoll && (
-            <label className="flex items-start gap-2 rounded-md border border-border/60 bg-secondary/40 p-3 text-sm">
-              <input
-                type="checkbox"
-                checked={withOpponent}
-                onChange={(e) => setWithOpponent(e.target.checked)}
-                className="mt-0.5"
-              />
-              <span>
-                <span className="font-medium">상대팀 자리도 함께 만들기 (대항전)</span>
-                <span className="block text-xs text-muted-foreground">
-                  상대팀 캡틴이 링크 한 번이면 합류해서 명단·포메이션을 등록할 수 있어요.
-                </span>
+          <label className="flex items-start gap-2 rounded-md border border-border/60 bg-secondary/40 p-3 text-sm">
+            <input
+              type="checkbox"
+              checked={withOpponent}
+              onChange={(e) => setWithOpponent(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="font-medium">상대팀 자리도 함께 만들기 (대항전)</span>
+              <span className="block text-xs text-muted-foreground">
+                매치에 합류 코드가 생기고, 상대팀 캡틴에게 링크 한 번 보내면 매치에 직접 합류해
+                명단·포메이션을 등록할 수 있어요.
               </span>
-            </label>
-          )}
+            </span>
+          </label>
 
-          {!fromPoll && withOpponent && (
+          {withOpponent && (
             <div className="space-y-1.5">
               <Label htmlFor="match-opp">상대팀 이름</Label>
               <Input

@@ -1,39 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppShell from '@/components/AppShell';
 import { useAuthLoading, useUser } from '@/features/auth/hooks';
-import { joinGroup } from '@/features/group/api';
 import { signInWithGoogle } from '@/features/auth/api';
 import { Button } from '@/components/ui/button';
 
+// 그룹 초대 링크 (`/join?code=ABC123`) 처리.
+// 자동 합류는 안 하고, 메인 그룹 페이지로 이동시키며 코드 입력 다이얼로그를 자동 오픈.
 export default function Join() {
   const [params] = useSearchParams();
   const code = params.get('code');
-  const matchId = params.get('matchId');
   const user = useUser();
   const loading = useAuthLoading();
   const navigate = useNavigate();
-  const [status, setStatus] = useState('idle');
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (loading || !user) return;
-
-    // 상대팀 합류 링크 (matchId 포함): 자동 합류 + 매치 페이지로 이동
-    if (code && matchId) {
-      setStatus('joining');
-      joinGroup({ inviteCode: code.toUpperCase(), uid: user.uid })
-        .then((groupId) => navigate(`/groups/${groupId}/matches/${matchId}`, { replace: true }))
-        .catch((e) => {
-          setStatus('error');
-          setError(e.message);
-        });
-      return;
-    }
-
-    // 친구 초대 링크: 자동 합류 X. 메인 그룹 페이지로 보내고 코드 입력 다이얼로그를 열도록 신호 전달.
     navigate('/groups', { replace: true, state: { openJoinDialog: true } });
-  }, [code, matchId, user, loading, navigate]);
+  }, [code, user, loading, navigate]);
 
   if (loading) {
     return (
@@ -59,11 +43,7 @@ export default function Join() {
 
   return (
     <AppShell>
-      {status === 'error' ? (
-        <p className="text-center text-destructive">{error}</p>
-      ) : (
-        <p className="text-center text-muted-foreground">이동 중…</p>
-      )}
+      <p className="text-center text-muted-foreground">이동 중…</p>
     </AppShell>
   );
 }

@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 
+// `team` 은 { name, playerUids[], formation } 형태.
 export default function TeamPanel({
-  match,
+  team,
   players,
   isMine,
   isParticipant,
@@ -13,9 +14,10 @@ export default function TeamPanel({
   onFormationChange,
   onFormationType,
   formationOptions = [],
-  recruitingHint = null
+  recruitingHint = null,
+  sideLabel = null
 }) {
-  if (!match) {
+  if (!team) {
     return (
       <Card className="h-full">
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -25,24 +27,23 @@ export default function TeamPanel({
     );
   }
 
-  const formation = match.homeTeam.formation;
-  const playerUids = match.homeTeam.playerUids ?? [];
+  const formation = team.formation;
+  const playerUids = team.playerUids ?? [];
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-base">{match.homeTeam.name}</CardTitle>
+            <CardTitle className="text-base">{team.name}</CardTitle>
             <Badge variant={isMine ? 'default' : 'outline'}>
-              {isMine ? '내 팀' : '상대팀'}
+              {isMine ? '내 팀' : sideLabel ?? '상대팀'}
             </Badge>
           </div>
           <span className="text-xs text-muted-foreground">{playerUids.length}명</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Roster */}
         <div className="space-y-2">
           {isMine && recruitingHint ? (
             <div className="rounded-md border border-primary/40 bg-primary/5 p-2 text-xs text-foreground">
@@ -77,7 +78,6 @@ export default function TeamPanel({
           )}
         </div>
 
-        {/* Formation type selector */}
         {isMine && formationOptions.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {formationOptions.map(([key, tpl]) => (
@@ -93,7 +93,6 @@ export default function TeamPanel({
           </div>
         )}
 
-        {/* Pitch */}
         {formation?.positions?.length > 0 && (
           <Pitch
             formation={formation}

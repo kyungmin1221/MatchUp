@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Users } from 'lucide-react';
+import { BookOpen, Plus, Swords, Users } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import IntroDialog from '@/components/IntroDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -17,13 +18,16 @@ import {
 } from '@/components/ui/dialog';
 import { useUser } from '@/features/auth/hooks';
 import { useMyGroups } from '@/features/group/hooks';
+import { useMyAwayMatches } from '@/features/match/hooks';
 import { createGroup, joinGroup } from '@/features/group/api';
+import { formatDateTime } from '@/lib/utils';
 
 export default function Groups() {
   const user = useUser();
   const navigate = useNavigate();
   const location = useLocation();
   const { groups, loading } = useMyGroups();
+  const { matches: awayMatches } = useMyAwayMatches();
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [introOpen, setIntroOpen] = useState(false);
@@ -156,6 +160,36 @@ export default function Groups() {
             </Link>
           ))}
         </div>
+      )}
+
+      {awayMatches.length > 0 && (
+        <section className="mt-10">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
+            <Swords className="h-5 w-5" /> 참여 중인 대항전
+          </h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            다른 그룹의 매치에 상대팀으로 합류한 매치들이에요.
+          </p>
+          <div className="space-y-3">
+            {awayMatches.map((m) => (
+              <Link key={m.id} to={`/groups/_/matches/${m.id}`}>
+                <Card className="transition hover:border-primary/50">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base">{m.title}</CardTitle>
+                      <Badge variant="outline">상대팀</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground">
+                    {m.scheduledAt && <p>{formatDateTime(m.scheduledAt)}</p>}
+                    {m.location && <p>📍 {m.location}</p>}
+                    <p>👥 우리 {m.awayTeam?.playerUids?.length ?? 0}명 · 상대 {m.homeTeam?.playerUids?.length ?? 0}명</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       <IntroDialog open={introOpen} onOpenChange={setIntroOpen} />

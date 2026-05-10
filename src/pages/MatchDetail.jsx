@@ -22,72 +22,68 @@ import {
 } from '@/features/formation/templates';
 import { formatDateTime } from '@/lib/utils';
 
+const FALLBACK_GROUP_ID_PARAM = '_';
+
 export default function MatchDetail() {
   const { groupId, matchId } = useParams();
   const user = useUser();
   const navigate = useNavigate();
 
   const { match, loading } = useMatch(matchId);
-  const { match: opponent } = useMatch(match?.opponentMatchId);
 
   const { group: ourGroup } = useGroup(match?.groupId);
-  const { group: oppGroup } = useGroup(opponent?.groupId);
   const isOwner = !!user && ourGroup?.ownerUid === user.uid;
 
-  // polls.matchId 가 source of truth. 매치의 recruitingPollId 캐시가 stale 해도 자동으로 폴을 찾는다.
+  // 본인이 home 측인지 away 측인지 결정
+  const isHomeMember = !!user && (ourGroup?.memberUids ?? []).includes(user.uid);
+  const isAwayMember = !!user && (match?.awayMemberUids ?? []).includes(user.uid);
+  const mySide = isHomeMember ? 'home' : isAwayMember ? 'away' : null;
+
+  const homePlayerUids = match?.homeTeam?.playerUids ?? [];
+  const awayPlayerUids = match?.awayTeam?.playerUids ?? [];
+  const { data: homePlayers = [] } = useMembers(homePlayerUids);
+  const { data: awayPlayers = [] } = useMembers(awayPlayerUids);
+
   const { poll: recruitingPoll } = useRecruitingPollByMatch({
     groupId: match?.groupId,
     matchId
   });
 
-  const myPlayerUids = match?.homeTeam.playerUids ?? [];
-  const oppPlayerUids = opponent?.homeTeam.playerUids ?? [];
-  const { data: myPlayers = [] } = useMembers(myPlayerUids);
-  const { data: oppPlayers = [] } = useMembers(oppPlayerUids);
-
   const matchKind = match?.kind ?? 'football';
   const formationOptions = useMemo(() => formationsByKind(matchKind), [matchKind]);
 
-  // 우리 매치에 포메이션 슬롯이 비어 있거나 종목과 안 맞으면 자동 채움
-  const myFormation = match?.homeTeam.formation;
+  // 본인 측 매치 포메이션 슬롯 자동 채움
+  const mySideFormation =
+    mySide === 'away'
+      ? match?.awayTeam?.formation
+      : match?.homeTeam?.formation;
   useEffect(() => {
-    if (!match) return;
-    const isValidType = formationOptions.some(([key]) => key === myFormation?.type);
-    if (!myFormation?.positions?.length || !isValidType) {
-      const nextType = isValidType ? myFormation.type : DEFAULT_FORMATION[matchKind];
-      updateFormation({ matchId, formation: buildFormation(nextType) });
+    if (!match || !mySide) return;
+    const isValidType = formationOptions.some(([key]) => key === mySideFormation?.type);
+    if (!mySideFormation?.positions?.length || !isValidType) {
+      const nextType = isValidType ? mySideFormation.type : DEFAULT_FORMATION[matchKind];
+      updateFormation({ matchId, formation: buildFormation(nextType), side: mySide });
     }
-  }, [match, myFormation, matchId, matchKind, formationOptions]);
+  }, [match, mySide, mySideFormation, matchId, matchKind, formationOptions]);
 
-  // 상대팀 매치에 캡틴이 합류했는데 포메이션이 비었으면 슬롯 자동 채움 (편집권자만)
-  const oppFormation = opponent?.homeTeam.formation;
-  useEffect(() => {
-    if (!opponent || !user) return;
-    // 상대 매치를 편집할 권한이 있어야 함 (= 상대팀 그룹 멤버여야 함)
-    // 새도우 그룹은 우리도 멤버라 update 가능하지만, 의도적으로 상대 매치는 건드리지 않는다.
-    // → 빈 포메이션 자동 채우기는 캡틴(=상대팀)이 자기 매치 페이지에 진입했을 때만 실행되도록 우리는 패스.
-  }, [opponent, oppFormation, user]);
-
-  const isParticipant = !!user && myPlayerUids.includes(user.uid);
+  const isParticipant =
+    mySide === 'away'
+      ? awayPlayerUids.includes(user?.uid)
+      : homePlayerUids.includes(user?.uid);
 
   const handleToggleJoin = async () => {
-    if (!user) return;
-    await togglePlayer({ matchId, uid: user.uid, join: !isParticipant });
+    if (!user || !mySide) return;
+    await togglePlayer({ matchId, uid: user.uid, join: !isParticipant, side: mySide });
   };
 
   const handleFormationType = async (type) => {
-    await updateFormation({ matchId, formation: buildFormation(type) });
+    if (!mySide) return;
+    await updateFormation({ matchId, formation: buildFormation(type), side: mySide });
   };
 
   const handleFormationChange = async (next) => {
-    await updateFormation({ matchId, formation: next });
-  };
-
-  const copyOpponentJoinLink = async () => {
-    if (!opponent || !oppGroup) return;
-    const url = `${window.location.origin}/join?code=${oppGroup.inviteCode}&matchId=${opponent.id}`;
-    await navigator.clipboard.writeText(url);
-    alert('상대팀 합류 링크를 복사했어요!');
+    if (!mySide) return;
+    await updateFormation({ matchId, formation: next, side: mySide });
   };
 
   const handleChangeKind = async (nextKind) => {
@@ -105,11 +101,22 @@ export default function MatchDetail() {
     }
   };
 
+  const copyOpponentJoinLink = async () => {
+    if (!match?.awayInviteCode) return;
+    const url = `${window.location.origin}/match-invite?code=${match.awayInviteCode}`;
+    const text = `[MatchUp] ${ourGroup?.name ?? ''} - ${match.title} 대항전 합류 링크\n${url}`;
+    await navigator.clipboard.writeText(text);
+    alert('상대팀 합류 링크를 복사했어요!');
+  };
+
   const handleDeleteMatch = async () => {
     if (!confirm('이 매치를 삭제할까요? 되돌릴 수 없어요.')) return;
     try {
       await deleteMatch({ matchId });
-      navigate(`/groups/${groupId}`, { replace: true });
+      navigate(
+        groupId === FALLBACK_GROUP_ID_PARAM ? '/groups' : `/groups/${groupId}`,
+        { replace: true }
+      );
     } catch (e) {
       alert(e.message);
     }
@@ -130,14 +137,21 @@ export default function MatchDetail() {
     );
   }
 
+  const hasOpponent = !!match.awayTeam;
+  const backHref =
+    mySide === 'away'
+      ? '/groups'
+      : `/groups/${match.groupId}`;
+  const backLabel = mySide === 'away' ? '내 그룹' : '그룹으로';
+
   return (
     <AppShell>
       <div className="mb-4">
         <Link
-          to={`/groups/${groupId}`}
+          to={backHref}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="mr-1 h-4 w-4" /> 그룹으로
+          <ArrowLeft className="mr-1 h-4 w-4" /> {backLabel}
         </Link>
       </div>
 
@@ -147,10 +161,13 @@ export default function MatchDetail() {
           <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
             {match.scheduledAt && <p>{formatDateTime(match.scheduledAt)}</p>}
             {match.location && <p>📍 {match.location}</p>}
+            {mySide === 'away' && (
+              <p className="text-primary">상대팀(어웨이)으로 참여 중</p>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {opponent && oppGroup && (
+          {hasOpponent && match.awayInviteCode && mySide === 'home' && (
             <Button variant="outline" size="sm" onClick={copyOpponentJoinLink}>
               <Share2 className="mr-1 h-4 w-4" /> 상대팀 합류 링크
             </Button>
@@ -191,7 +208,7 @@ export default function MatchDetail() {
         </div>
       )}
 
-      {recruitingPoll && ourGroup && (
+      {recruitingPoll && ourGroup && mySide === 'home' && (
         <div className="mb-4">
           <PollCard poll={recruitingPoll} group={ourGroup} />
         </div>
@@ -199,22 +216,35 @@ export default function MatchDetail() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <TeamPanel
-          match={match}
-          players={myPlayers}
-          isMine
-          isParticipant={isParticipant}
+          match={{ ...match, homeTeam: match.homeTeam }}
+          team={match.homeTeam}
+          players={homePlayers}
+          isMine={mySide === 'home'}
+          isParticipant={mySide === 'home' && isParticipant}
           onToggleJoin={handleToggleJoin}
           onFormationChange={handleFormationChange}
           onFormationType={handleFormationType}
           formationOptions={formationOptions}
           recruitingHint={
-            recruitingPoll
+            mySide === 'home' && recruitingPoll
               ? '명단은 모집 투표 결과로 자동 채워져요. 위쪽의 모집 투표에서 응답해주세요.'
               : null
           }
+          sideLabel="홈"
         />
-        {match.opponentMatchId && (
-          <TeamPanel match={opponent} players={oppPlayers} isMine={false} />
+        {hasOpponent && (
+          <TeamPanel
+            match={{ ...match, homeTeam: match.awayTeam }}
+            team={match.awayTeam}
+            players={awayPlayers}
+            isMine={mySide === 'away'}
+            isParticipant={mySide === 'away' && isParticipant}
+            onToggleJoin={handleToggleJoin}
+            onFormationChange={handleFormationChange}
+            onFormationType={handleFormationType}
+            formationOptions={formationOptions}
+            sideLabel="어웨이"
+          />
         )}
       </div>
     </AppShell>
