@@ -243,36 +243,54 @@ export default function MatchDetail() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <TeamPanel
-          match={{ ...match, homeTeam: match.homeTeam }}
-          team={match.homeTeam}
-          players={homePlayers}
-          isMine={mySide === 'home'}
-          isParticipant={mySide === 'home' && isParticipant}
-          onToggleJoin={handleToggleJoin}
-          onFormationChange={handleFormationChange}
-          onFormationType={handleFormationType}
-          formationOptions={formationOptions}
-          recruitingHint={
-            mySide === 'home' && recruitingPoll
-              ? '명단은 모집 투표 결과로 자동 채워져요. 위쪽의 모집 투표에서 응답해주세요.'
-              : null
-          }
-          sideLabel="홈"
-        />
-        {hasOpponent && (
-          <TeamPanel
-            match={{ ...match, homeTeam: match.awayTeam }}
-            team={match.awayTeam}
-            players={awayPlayers}
-            isMine={mySide === 'away'}
-            isParticipant={mySide === 'away' && isParticipant}
-            onToggleJoin={handleToggleJoin}
-            onFormationChange={handleFormationChange}
-            onFormationType={handleFormationType}
-            formationOptions={formationOptions}
-            sideLabel="어웨이"
-          />
+        {/* 본인 팀이 항상 좌측에 오도록 mySide 에 따라 순서 변경 */}
+        {mySide === 'away' && hasOpponent ? (
+          <>
+            <TeamPanel
+              team={match.awayTeam}
+              players={awayPlayers}
+              isMine
+              isParticipant={isParticipant}
+              onToggleJoin={handleToggleJoin}
+              onFormationChange={handleFormationChange}
+              onFormationType={handleFormationType}
+              formationOptions={formationOptions}
+              sideLabel="어웨이"
+            />
+            <TeamPanel
+              team={match.homeTeam}
+              players={homePlayers}
+              isMine={false}
+              sideLabel="홈"
+            />
+          </>
+        ) : (
+          <>
+            <TeamPanel
+              team={match.homeTeam}
+              players={homePlayers}
+              isMine={mySide === 'home'}
+              isParticipant={mySide === 'home' && isParticipant}
+              onToggleJoin={handleToggleJoin}
+              onFormationChange={handleFormationChange}
+              onFormationType={handleFormationType}
+              formationOptions={formationOptions}
+              recruitingHint={
+                mySide === 'home' && recruitingPoll
+                  ? '명단은 모집 투표 결과로 자동 채워져요. 위쪽의 모집 투표에서 응답해주세요.'
+                  : null
+              }
+              sideLabel="홈"
+            />
+            {hasOpponent && (
+              <TeamPanel
+                team={match.awayTeam}
+                players={awayPlayers}
+                isMine={false}
+                sideLabel="어웨이"
+              />
+            )}
+          </>
         )}
       </div>
     </AppShell>
