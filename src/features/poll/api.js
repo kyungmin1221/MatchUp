@@ -3,12 +3,14 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
   runTransaction,
   serverTimestamp,
   Timestamp,
+  updateDoc,
   where
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -115,5 +117,22 @@ export function subscribeGroupPolls(groupId, cb) {
 }
 
 export async function deletePoll({ pollId }) {
-  await deleteDoc(doc(db, 'polls', pollId));
+  // 연결된 매치가 있으면 매치의 recruitingPollId 도 같이 정리
+  const ref = doc(db, 'polls', pollId);
+  try {
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.matchId) {
+        try {
+          await updateDoc(doc(db, 'matches', data.matchId), { recruitingPollId: null });
+        } catch {
+          /* 매치가 이미 사라졌거나 권한 없음 - 무시하고 폴은 삭제 */
+        }
+      }
+    }
+  } catch {
+    /* read 실패해도 삭제는 시도 */
+  }
+  await deleteDoc(ref);
 }
