@@ -60,7 +60,17 @@ export default async function handler(req, res) {
     });
     if (!tokenRes.ok) {
       const detail = await tokenRes.text();
-      return res.status(401).json({ error: '카카오 토큰 교환 실패', detail });
+      const k = process.env.KAKAO_REST_API_KEY ?? '';
+      return res.status(401).json({
+        error: '카카오 토큰 교환 실패',
+        detail,
+        __debug: {
+          keyLen: k.length,
+          keyHead: k.slice(0, 4),
+          keyTail: k.slice(-4),
+          redirectUriEcho: redirectUri
+        }
+      });
     }
     const tokenJson = await tokenRes.json();
     const accessToken = tokenJson.access_token;

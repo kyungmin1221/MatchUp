@@ -2,6 +2,7 @@ import {
   addDoc,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   documentId,
   getDoc,
@@ -14,6 +15,7 @@ import {
   where
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { deleteMatch } from '@/features/match/api';
 import { generateCode } from '@/lib/utils';
 
 export async function createGroup({ name, ownerUid, kind = 'permanent' }) {
@@ -34,6 +36,22 @@ export async function leaveGroup({ groupId, uid }) {
   if (!snap.exists()) return;
   const next = (snap.data().memberUids ?? []).filter((u) => u !== uid);
   await updateDoc(ref, { memberUids: next });
+}
+
+// 그룹 owner 전용. 그룹의 폴과 매치도 함께 삭제한 뒤 그룹 자체를 삭제.
+// 매치는 deleteMatch 를 통해 상대팀 매치와의 연결도 정리됨.
+export async function deleteGroup({ groupId }) {
+  const [pollsSnap, matchesSnap] = await Promise.all([
+    getDocs(query(collection(db, 'polls'), where('groupId', '==', groupId))),
+    getDocs(query(collection(db, 'matches'), where('groupId', '==', groupId)))
+  ]);
+
+  await Promise.all([
+    ...pollsSnap.docs.map((d) => deleteDoc(d.ref).catch(() => {})),
+    ...matchesSnap.docs.map((d) => deleteMatch({ matchId: d.id }).catch(() => {}))
+  ]);
+
+  await deleteDoc(doc(db, 'groups', groupId));
 }
 
 export async function joinGroup({ inviteCode, uid }) {

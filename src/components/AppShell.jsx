@@ -15,8 +15,8 @@ export default function AppShell({ children }) {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur safe-top">
         <div className="container flex h-14 items-center justify-between">
           <Link to="/groups" className="flex items-center gap-2 font-semibold tracking-tight">
             <span className="inline-block h-6 w-6 rounded bg-primary" />
@@ -35,7 +35,7 @@ export default function AppShell({ children }) {
           )}
         </div>
       </header>
-      <main className="flex-1 container py-6 safe-bottom">{children}</main>
+      <main className="flex-1 container pt-6 safe-bottom">{children}</main>
     </div>
   );
 }

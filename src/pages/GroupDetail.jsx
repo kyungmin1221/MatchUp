@@ -1,5 +1,5 @@
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Copy, Plus, Vote } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Calendar, Copy, LogOut, Plus, Trash2, Vote } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import PollCard from '@/components/PollCard';
 import CreatePollDialog from '@/components/CreatePollDialog';
@@ -8,17 +8,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useUser } from '@/features/auth/hooks';
 import { useGroup, useMembers } from '@/features/group/hooks';
+import { deleteGroup, leaveGroup } from '@/features/group/api';
 import { useGroupPolls } from '@/features/poll/hooks';
 import { useGroupMatches } from '@/features/match/hooks';
 import { formatDateTime } from '@/lib/utils';
 
 export default function GroupDetail() {
   const { groupId } = useParams();
+  const navigate = useNavigate();
+  const user = useUser();
   const { group, loading } = useGroup(groupId);
   const { polls } = useGroupPolls(groupId);
   const { matches } = useGroupMatches(groupId);
   const { data: members = [] } = useMembers(group?.memberUids);
+
+  const isOwner = !!user && group?.ownerUid === user.uid;
 
   const copyInvite = async () => {
     if (!group) return;
@@ -26,6 +32,33 @@ export default function GroupDetail() {
     const text = `[MatchUp] "${group.name}" 그룹에 초대합니다.\n초대 코드: ${group.inviteCode}\n앱 열기: ${url}`;
     await navigator.clipboard.writeText(text);
     alert('초대 메시지를 복사했어요. 친구에게 붙여넣기해서 보내주세요.');
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!group) return;
+    if (
+      !confirm(
+        `"${group.name}" 그룹을 삭제할까요?\n그룹 안의 모든 투표·매치도 함께 삭제되고 되돌릴 수 없어요.`
+      )
+    )
+      return;
+    try {
+      await deleteGroup({ groupId });
+      navigate('/groups', { replace: true });
+    } catch (e) {
+      alert(e.message ?? '그룹 삭제에 실패했어요.');
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!group || !user) return;
+    if (!confirm(`"${group.name}" 그룹에서 나갈까요?`)) return;
+    try {
+      await leaveGroup({ groupId, uid: user.uid });
+      navigate('/groups', { replace: true });
+    } catch (e) {
+      alert(e.message ?? '그룹에서 나가기에 실패했어요.');
+    }
   };
 
   if (loading) {
@@ -54,16 +87,37 @@ export default function GroupDetail() {
         </Link>
       </div>
 
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{group.name}</h1>
           <p className="text-sm text-muted-foreground">
             멤버 {group.memberUids.length}명
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={copyInvite}>
-          <Copy className="mr-1 h-4 w-4" /> 초대 링크
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={copyInvite}>
+            <Copy className="mr-1 h-4 w-4" /> 초대 링크
+          </Button>
+          {isOwner ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDeleteGroup}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="mr-1 h-4 w-4" /> 그룹 삭제
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLeaveGroup}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <LogOut className="mr-1 h-4 w-4" /> 그룹 나가기
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
