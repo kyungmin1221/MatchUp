@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { useAuthLoading, useUser } from '@/features/auth/hooks';
 import { signInWithGoogle } from '@/features/auth/api';
+import { signInWithKakao } from '@/features/auth/kakao';
 import { joinMatchByCode } from '@/features/match/api';
 
 export default function MatchInvite() {
@@ -14,6 +15,7 @@ export default function MatchInvite() {
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
+  const [pending, setPending] = useState(null); // 'google' | 'kakao' | null
   const ranRef = useRef(false);
 
   useEffect(() => {
@@ -27,6 +29,33 @@ export default function MatchInvite() {
         setError(e.message);
       });
   }, [code, user, loading, navigate]);
+
+  const handleGoogle = async () => {
+    setPending('google');
+    try {
+      await signInWithGoogle();
+      // signInWithPopup 성공 후엔 useEffect 가 자동으로 합류 처리
+    } catch (e) {
+      console.error(e);
+      alert('Google 로그인에 실패했어요.');
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const handleKakao = async () => {
+    setPending('kakao');
+    try {
+      // 콜백 후 다시 이 페이지로 돌아오도록 returnTo 지정
+      const returnTo = window.location.pathname + window.location.search;
+      await signInWithKakao({ returnTo });
+      // 이 시점에 카카오로 redirect — 코드 더는 실행 안 됨
+    } catch (e) {
+      console.error(e);
+      alert(e?.message ?? '카카오 로그인에 실패했어요.');
+      setPending(null);
+    }
+  };
 
   if (!code) {
     return (
@@ -51,9 +80,25 @@ export default function MatchInvite() {
         <p className="mt-2 text-muted-foreground">
           로그인하면 자동으로 매치에 합류해요.
         </p>
-        <Button size="lg" className="mt-6" onClick={() => signInWithGoogle()}>
-          Google로 로그인하고 합류
-        </Button>
+
+        <div className="mt-6 w-full max-w-sm space-y-3">
+          <Button
+            size="lg"
+            className="w-full h-14 text-base"
+            onClick={handleGoogle}
+            disabled={!!pending}
+          >
+            {pending === 'google' ? '로그인 중…' : 'Google 로 시작하기'}
+          </Button>
+          <button
+            type="button"
+            onClick={handleKakao}
+            disabled={!!pending}
+            className="w-full h-14 rounded-md bg-[#FEE500] text-[#191919] text-base font-semibold hover:brightness-95 transition disabled:opacity-60"
+          >
+            {pending === 'kakao' ? '로그인 중…' : '카카오로 시작하기'}
+          </button>
+        </div>
       </div>
     );
   }

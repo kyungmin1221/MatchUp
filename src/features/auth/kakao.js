@@ -42,15 +42,16 @@ export function getKakaoRedirectUri() {
   return `${window.location.origin}/auth/kakao/callback`;
 }
 
-/** 랜딩에서 호출. 카카오 로그인 페이지로 redirect 시킨다. */
-export async function signInWithKakao() {
+/** 카카오 로그인 페이지로 redirect 시킨다.
+ *  returnTo: 콜백 후 돌아갈 path+query (예: '/match-invite?code=XYZ').
+ */
+export async function signInWithKakao({ returnTo = '/groups' } = {}) {
   if (!import.meta.env.VITE_KAKAO_JS_KEY) {
     throw new Error('VITE_KAKAO_JS_KEY 환경변수가 설정되지 않았어요.');
   }
   const Kakao = await loadKakaoSdk();
-  // 콜백 후 돌아갈 위치 저장
   try {
-    sessionStorage.setItem(RETURN_TO_KEY, '/groups');
+    sessionStorage.setItem(RETURN_TO_KEY, returnTo);
   } catch {
     /* private mode 등 */
   }
@@ -58,7 +59,6 @@ export async function signInWithKakao() {
     redirectUri: getKakaoRedirectUri(),
     scope: 'profile_nickname,profile_image'
   });
-  // 이 시점부터 페이지가 카카오로 redirect 됨
 }
 
 /** /auth/kakao/callback 페이지에서 호출. 인가 코드를 서버에 보내고 Firebase 로그인 마무리. */
