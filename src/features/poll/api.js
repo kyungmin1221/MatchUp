@@ -107,6 +107,19 @@ export function subscribePoll(pollId, cb) {
   });
 }
 
+// 매치의 모집 투표를 폴의 matchId 필드로 찾는다 (source of truth).
+export function subscribePollByMatch(matchId, cb) {
+  const q = query(collection(db, 'polls'), where('matchId', '==', matchId));
+  return onSnapshot(q, (snap) => {
+    if (snap.empty) {
+      cb(null);
+      return;
+    }
+    const d = snap.docs[0];
+    cb({ id: d.id, ...d.data() });
+  });
+}
+
 export function subscribeGroupPolls(groupId, cb) {
   const q = query(collection(db, 'polls'), where('groupId', '==', groupId));
   return onSnapshot(q, (snap) => {

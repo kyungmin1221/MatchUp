@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { subscribeGroupPolls, subscribePoll } from './api';
+import { subscribeGroupPolls, subscribePoll, subscribePollByMatch } from './api';
 
 export function useGroupPolls(groupId) {
   const [polls, setPolls] = useState([]);
@@ -32,5 +32,25 @@ export function usePoll(pollId) {
     });
     return unsub;
   }, [pollId]);
+  return { poll, loading };
+}
+
+// 매치의 모집 투표를 polls.matchId 로 찾는다. recruitingPollId 캐시가 stale 해도 자동 복구.
+export function useRecruitingPollByMatch(matchId) {
+  const [poll, setPoll] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!matchId) {
+      setPoll(null);
+      setLoading(false);
+      return undefined;
+    }
+    setLoading(true);
+    const unsub = subscribePollByMatch(matchId, (p) => {
+      setPoll(p);
+      setLoading(false);
+    });
+    return unsub;
+  }, [matchId]);
   return { poll, loading };
 }

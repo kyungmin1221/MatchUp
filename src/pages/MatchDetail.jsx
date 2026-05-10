@@ -8,12 +8,11 @@ import { Button } from '@/components/ui/button';
 import { useUser } from '@/features/auth/hooks';
 import { useGroup, useMembers } from '@/features/group/hooks';
 import { useMatch } from '@/features/match/hooks';
-import { usePoll } from '@/features/poll/hooks';
+import { useRecruitingPollByMatch } from '@/features/poll/hooks';
 import {
   deleteMatch,
   togglePlayer,
   updateFormation,
-  updateMatchInfo,
   updateMatchKind
 } from '@/features/match/api';
 import {
@@ -35,18 +34,8 @@ export default function MatchDetail() {
   const { group: oppGroup } = useGroup(opponent?.groupId);
   const isOwner = !!user && ourGroup?.ownerUid === user.uid;
 
-  const { poll: recruitingPoll, loading: recruitingLoading } = usePoll(match?.recruitingPollId);
-
-  // 매치의 recruitingPollId 가 가리키는 폴이 실제로 사라진 경우 → 매치의 참조를 정리한다 (자가 치유)
-  useEffect(() => {
-    if (
-      match?.recruitingPollId &&
-      !recruitingLoading &&
-      recruitingPoll === null
-    ) {
-      updateMatchInfo({ matchId, patch: { recruitingPollId: null } }).catch(() => {});
-    }
-  }, [match, recruitingPoll, recruitingLoading, matchId]);
+  // polls.matchId 가 source of truth. 매치의 recruitingPollId 캐시가 stale 해도 자동으로 폴을 찾는다.
+  const { poll: recruitingPoll } = useRecruitingPollByMatch(matchId);
 
   const myPlayerUids = match?.homeTeam.playerUids ?? [];
   const oppPlayerUids = opponent?.homeTeam.playerUids ?? [];
@@ -216,7 +205,7 @@ export default function MatchDetail() {
           onFormationType={handleFormationType}
           formationOptions={formationOptions}
           recruitingHint={
-            match.recruitingPollId && recruitingPoll
+            recruitingPoll
               ? '명단은 모집 투표 결과로 자동 채워져요. 위쪽의 모집 투표에서 응답해주세요.'
               : null
           }
