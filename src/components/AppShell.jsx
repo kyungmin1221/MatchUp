@@ -1,13 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { useUser } from '@/features/auth/hooks';
+import { useIsAdmin } from '@/features/admin/hooks';
 import { signOut } from '@/features/auth/api';
 
 export default function AppShell({ children }) {
   const user = useUser();
   const navigate = useNavigate();
+  const isAdmin = useIsAdmin(user?.uid);
 
   const handleSignOut = async () => {
     await signOut();
@@ -24,6 +26,13 @@ export default function AppShell({ children }) {
           </Link>
           {user && (
             <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Link to="/admin" aria-label="관리자">
+                  <Button variant="ghost" size="icon">
+                    <ShieldCheck className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
               <Avatar src={user.photoURL} name={user.displayName} size={28} />
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {user.displayName}

@@ -5,7 +5,9 @@ import GroupDetail from './pages/GroupDetail';
 import MatchDetail from './pages/MatchDetail';
 import Join from './pages/Join';
 import KakaoCallback from './pages/KakaoCallback';
+import Admin from './pages/Admin';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 
 export default function AppRoutes() {
   return (
@@ -35,6 +37,14 @@ export default function AppRoutes() {
           <ProtectedRoute>
             <MatchDetail />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <Admin />
+          </AdminRoute>
         }
       />
       <Route path="*" element={<div className="p-6">페이지를 찾을 수 없어요.</div>} />

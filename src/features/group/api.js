@@ -31,6 +31,54 @@ export async function createGroup({ name, ownerUid, kind = 'permanent' }) {
 }
 
 export async function leaveGroup({ groupId, uid }) {
+  // 먼저 그룹 멤버 상태에서 그룹의 폴/매치 흔적을 정리한다.
+  // (memberUids 에서 빠진 후엔 update 권한이 없어지므로 순서 중요)
+
+  // 1) 폴들에서 본인의 표 제거
+  const pollsSnap = await getDocs(
+    query(collection(db, 'polls'), where('groupId', '==', groupId))
+  );
+  await Promise.all(
+    pollsSnap.docs.map(async (d) => {
+      const data = d.data();
+      let dirty = false;
+      const nextOptions = (data.options ?? []).map((opt) => {
+        if (opt.voterUids?.includes(uid)) {
+          dirty = true;
+          return { ...opt, voterUids: opt.voterUids.filter((u) => u !== uid) };
+        }
+        return opt;
+      });
+      if (dirty) await updateDoc(d.ref, { options: nextOptions });
+    })
+  );
+
+  // 2) 매치들에서 본인 명단·포메이션 슬롯 정리
+  const matchesSnap = await getDocs(
+    query(collection(db, 'matches'), where('groupId', '==', groupId))
+  );
+  await Promise.all(
+    matchesSnap.docs.map(async (d) => {
+      const data = d.data();
+      const team = data.homeTeam ?? {};
+      const playerUids = team.playerUids ?? [];
+      const positions = team.formation?.positions ?? [];
+      const wasPlayer = playerUids.includes(uid);
+      const wasInFormation = positions.some((p) => p.playerUid === uid);
+      if (!wasPlayer && !wasInFormation) return;
+
+      const nextPlayerUids = playerUids.filter((u) => u !== uid);
+      const nextPositions = positions.map((p) =>
+        p.playerUid === uid ? { ...p, playerUid: null } : p
+      );
+      await updateDoc(d.ref, {
+        'homeTeam.playerUids': nextPlayerUids,
+        'homeTeam.formation.positions': nextPositions
+      });
+    })
+  );
+
+  // 3) 마지막으로 그룹 memberUids 에서 본인 제거
   const ref = doc(db, 'groups', groupId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
