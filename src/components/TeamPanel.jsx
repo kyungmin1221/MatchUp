@@ -12,7 +12,8 @@ export default function TeamPanel({
   onToggleJoin,
   onFormationChange,
   onFormationType,
-  formationOptions = []
+  formationOptions = [],
+  recruitingHint = null
 }) {
   if (!match) {
     return (
@@ -43,15 +44,21 @@ export default function TeamPanel({
       <CardContent className="space-y-4">
         {/* Roster */}
         <div className="space-y-2">
-          {isMine && (
-            <Button
-              size="sm"
-              variant={isParticipant ? 'outline' : 'default'}
-              onClick={onToggleJoin}
-              className="w-full"
-            >
-              {isParticipant ? '참가 취소' : '참가하기'}
-            </Button>
+          {isMine && recruitingHint ? (
+            <div className="rounded-md border border-primary/40 bg-primary/5 p-2 text-xs text-foreground">
+              {recruitingHint}
+            </div>
+          ) : (
+            isMine && (
+              <Button
+                size="sm"
+                variant={isParticipant ? 'outline' : 'default'}
+                onClick={onToggleJoin}
+                className="w-full"
+              >
+                {isParticipant ? '참가 취소' : '참가하기'}
+              </Button>
+            )
           )}
           {players.length === 0 ? (
             <p className="text-xs text-muted-foreground">아직 참가자가 없어요.</p>

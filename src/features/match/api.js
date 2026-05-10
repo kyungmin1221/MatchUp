@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { createGroup } from '@/features/group/api';
+import { createRecruitingPoll } from '@/features/poll/api';
 import { DEFAULT_FORMATION } from '@/features/formation/templates';
 import { generateCode } from '@/lib/utils';
 
@@ -27,9 +28,10 @@ export async function createMatch({
   location,
   teamName,
   kind = 'football',
+  recruiting = false,
   createdBy
 }) {
-  return addDoc(collection(db, 'matches'), {
+  const ref = await addDoc(collection(db, 'matches'), {
     groupId,
     kind,
     title,
@@ -42,9 +44,22 @@ export async function createMatch({
     },
     opponentMatchId: null,
     shareCode: generateCode(6),
+    recruitingPollId: null,
     createdBy,
     createdAt: serverTimestamp()
   });
+
+  if (recruiting) {
+    const pollRef = await createRecruitingPoll({
+      groupId,
+      matchId: ref.id,
+      matchTitle: title,
+      createdBy
+    });
+    await updateDoc(ref, { recruitingPollId: pollRef.id });
+  }
+
+  return ref;
 }
 
 // 우리 매치 + 상대팀 새도우 그룹 + 상대팀 빈 매치를 한 번에 생성하고 양방향 연결.
@@ -57,6 +72,7 @@ export async function createMatchWithOpponent({
   teamName,
   opponentTeamName,
   kind = 'football',
+  recruiting = false,
   createdBy
 }) {
   const defaultType = DEFAULT_FORMATION[kind];
@@ -75,6 +91,7 @@ export async function createMatchWithOpponent({
     },
     opponentMatchId: null,
     shareCode: generateCode(6),
+    recruitingPollId: null,
     createdBy,
     createdAt: serverTimestamp()
   });
@@ -100,12 +117,24 @@ export async function createMatchWithOpponent({
     },
     opponentMatchId: ourMatchRef.id,
     shareCode: generateCode(6),
+    recruitingPollId: null,
     createdBy,
     createdAt: serverTimestamp()
   });
 
   // 4) 우리 매치에 상대 id 연결
   await updateDoc(ourMatchRef, { opponentMatchId: opponentMatchRef.id });
+
+  // 5) 모집 투표 (우리 매치에만)
+  if (recruiting) {
+    const pollRef = await createRecruitingPoll({
+      groupId,
+      matchId: ourMatchRef.id,
+      matchTitle: title,
+      createdBy
+    });
+    await updateDoc(ourMatchRef, { recruitingPollId: pollRef.id });
+  }
 
   return { ourMatchId: ourMatchRef.id, opponentMatchId: opponentMatchRef.id, shadowGroupId };
 }
@@ -119,6 +148,17 @@ export async function togglePlayer({ matchId, uid, join }) {
 export async function updateFormation({ matchId, formation }) {
   await updateDoc(doc(db, 'matches', matchId), {
     'homeTeam.formation': formation
+  });
+}
+
+// 매치 종목(축구/풋살) 변경. 포메이션 타입을 새 종목 디폴트로 교체하고 슬롯은 비워두면
+// MatchDetail 의 useEffect 가 자동으로 buildFormation 으로 슬롯을 채운다.
+export async function updateMatchKind({ matchId, kind }) {
+  const defaultType = DEFAULT_FORMATION[kind];
+  await updateDoc(doc(db, 'matches', matchId), {
+    kind,
+    'homeTeam.formation.type': defaultType,
+    'homeTeam.formation.positions': []
   });
 }
 
@@ -180,7 +220,49 @@ export async function unlinkOpponent({ ourMatchId, opponentMatchId }) {
   });
 }
 
+// 기존 모집 투표(아직 매치 미연결)에서 매치를 생성한다.
+// 1) 매치 생성 (homeTeam.playerUids = attendance 옵션 voterUids)
+// 2) 매치.recruitingPollId = pollId
+// 3) poll.matchId = matchId
+export async function createMatchFromPoll({
+  poll,
+  groupId,
+  title,
+  scheduledAt,
+  location,
+  teamName,
+  kind = 'football',
+  createdBy
+}) {
+  const attendanceOpt = poll.options?.find((o) => o.attendance);
+  const recruitedUids = attendanceOpt?.voterUids ?? [];
+
+  const ref = await addDoc(collection(db, 'matches'), {
+    groupId,
+    kind,
+    title,
+    scheduledAt: scheduledAt ? Timestamp.fromDate(new Date(scheduledAt)) : null,
+    location: location ?? '',
+    homeTeam: {
+      name: teamName ?? '우리 팀',
+      playerUids: recruitedUids,
+      formation: { type: DEFAULT_FORMATION[kind], positions: [] }
+    },
+    opponentMatchId: null,
+    shareCode: generateCode(6),
+    recruitingPollId: poll.id,
+    createdBy,
+    createdAt: serverTimestamp()
+  });
+
+  // 폴이 새 매치를 가리키도록
+  await updateDoc(doc(db, 'polls', poll.id), { matchId: ref.id });
+
+  return ref;
+}
+
 // 매치 삭제. 상대팀 매치가 연결되어 있으면 그쪽의 opponentMatchId만 끊고 우리 매치만 삭제.
+// 모집 투표가 연결되어 있으면 함께 삭제.
 export async function deleteMatch({ matchId }) {
   const ref = doc(db, 'matches', matchId);
   const snap = await getDoc(ref);
@@ -191,6 +273,13 @@ export async function deleteMatch({ matchId }) {
       await updateDoc(doc(db, 'matches', data.opponentMatchId), { opponentMatchId: null });
     } catch {
       /* 상대 매치가 이미 사라졌거나 권한이 없어도 무시하고 우리 매치는 삭제 */
+    }
+  }
+  if (data.recruitingPollId) {
+    try {
+      await deleteDoc(doc(db, 'polls', data.recruitingPollId));
+    } catch {
+      /* 투표가 이미 없거나 권한 없으면 무시 */
     }
   }
   await deleteDoc(ref);

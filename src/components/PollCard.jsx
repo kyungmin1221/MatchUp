@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { CalendarCheck, CalendarPlus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
+import CreateMatchDialog from '@/components/CreateMatchDialog';
 import { useUser } from '@/features/auth/hooks';
 import { useMembers } from '@/features/group/hooks';
 import { deletePoll, votePoll } from '@/features/poll/api';
@@ -12,6 +13,9 @@ import { cn, formatDateTime } from '@/lib/utils';
 export default function PollCard({ poll, group }) {
   const user = useUser();
   const isOwner = !!user && group?.ownerUid === user.uid;
+  const isRecruiting = !!poll.matchId; // 매치와 연결된 모집 투표
+  const isStandaloneRecruiting = !poll.matchId && poll.options?.some((o) => o.attendance);
+  const [convertOpen, setConvertOpen] = useState(false);
   const allVoterUids = useMemo(
     () => Array.from(new Set(poll.options.flatMap((o) => o.voterUids ?? []))),
     [poll]
@@ -44,9 +48,22 @@ export default function PollCard({ poll, group }) {
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base">{poll.title}</CardTitle>
+          <CardTitle className="text-base flex items-center gap-1.5 flex-wrap">
+            {(isRecruiting || isStandaloneRecruiting) && (
+              <CalendarCheck className="h-4 w-4 text-primary shrink-0" />
+            )}
+            <span>{poll.title}</span>
+          </CardTitle>
           <div className="flex items-center gap-1.5">
-            {closed ? <Badge variant="outline">마감</Badge> : <Badge>{poll.multi ? '복수' : '단일'}</Badge>}
+            {isRecruiting && <Badge>매치 모집</Badge>}
+            {isStandaloneRecruiting && <Badge variant="outline">참석 의향</Badge>}
+            {closed ? (
+              <Badge variant="outline">마감</Badge>
+            ) : (
+              !isRecruiting && !isStandaloneRecruiting && (
+                <Badge>{poll.multi ? '복수' : '단일'}</Badge>
+              )
+            )}
             {isOwner && (
               <Button
                 variant="ghost"
@@ -62,6 +79,20 @@ export default function PollCard({ poll, group }) {
         </div>
         {poll.closesAt && (
           <p className="text-xs text-muted-foreground">마감: {formatDateTime(poll.closesAt)}</p>
+        )}
+        {isStandaloneRecruiting && isOwner && group && (
+          <div className="pt-1">
+            <Button size="sm" variant="outline" onClick={() => setConvertOpen(true)}>
+              <CalendarPlus className="mr-1 h-4 w-4" />
+              이 투표로 매치 만들기
+            </Button>
+            <CreateMatchDialog
+              groupId={group.id}
+              fromPoll={poll}
+              open={convertOpen}
+              onOpenChange={setConvertOpen}
+            />
+          </div>
         )}
       </CardHeader>
       <CardContent className="space-y-2">

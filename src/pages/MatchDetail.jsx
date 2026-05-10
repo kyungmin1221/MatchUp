@@ -3,11 +3,18 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, Trash2 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import TeamPanel from '@/components/TeamPanel';
+import PollCard from '@/components/PollCard';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/features/auth/hooks';
 import { useGroup, useMembers } from '@/features/group/hooks';
 import { useMatch } from '@/features/match/hooks';
-import { deleteMatch, togglePlayer, updateFormation } from '@/features/match/api';
+import { usePoll } from '@/features/poll/hooks';
+import {
+  deleteMatch,
+  togglePlayer,
+  updateFormation,
+  updateMatchKind
+} from '@/features/match/api';
 import {
   DEFAULT_FORMATION,
   buildFormation,
@@ -26,6 +33,8 @@ export default function MatchDetail() {
   const { group: ourGroup } = useGroup(match?.groupId);
   const { group: oppGroup } = useGroup(opponent?.groupId);
   const isOwner = !!user && ourGroup?.ownerUid === user.uid;
+
+  const { poll: recruitingPoll } = usePoll(match?.recruitingPollId);
 
   const myPlayerUids = match?.homeTeam.playerUids ?? [];
   const oppPlayerUids = opponent?.homeTeam.playerUids ?? [];
@@ -75,6 +84,21 @@ export default function MatchDetail() {
     const url = `${window.location.origin}/join?code=${oppGroup.inviteCode}&matchId=${opponent.id}`;
     await navigator.clipboard.writeText(url);
     alert('상대팀 합류 링크를 복사했어요!');
+  };
+
+  const handleChangeKind = async (nextKind) => {
+    if (!match || nextKind === matchKind) return;
+    if (
+      !confirm(
+        `종목을 ${nextKind === 'football' ? '축구 (11인)' : '풋살 (5인)'}로 바꿀까요?\n현재 포메이션은 새 종목의 기본 포메이션으로 교체돼요.`
+      )
+    )
+      return;
+    try {
+      await updateMatchKind({ matchId, kind: nextKind });
+    } catch (e) {
+      alert(e.message ?? '종목 변경에 실패했어요.');
+    }
   };
 
   const handleDeleteMatch = async () => {
@@ -140,6 +164,35 @@ export default function MatchDetail() {
         </div>
       </div>
 
+      {isOwner && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">종목:</span>
+          {[
+            { v: 'football', label: '⚽ 축구 (11인)' },
+            { v: 'futsal', label: '🥅 풋살 (5인)' }
+          ].map((opt) => (
+            <button
+              key={opt.v}
+              type="button"
+              onClick={() => handleChangeKind(opt.v)}
+              className={
+                matchKind === opt.v
+                  ? 'rounded-md border border-primary bg-primary/15 px-3 py-1 text-primary'
+                  : 'rounded-md border border-border bg-background px-3 py-1 hover:border-primary/40'
+              }
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {recruitingPoll && ourGroup && (
+        <div className="mb-4">
+          <PollCard poll={recruitingPoll} group={ourGroup} />
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <TeamPanel
           match={match}
@@ -150,6 +203,11 @@ export default function MatchDetail() {
           onFormationChange={handleFormationChange}
           onFormationType={handleFormationType}
           formationOptions={formationOptions}
+          recruitingHint={
+            match.recruitingPollId
+              ? '명단은 모집 투표 결과로 자동 채워져요. 그룹 페이지의 모집 투표에서 응답해주세요.'
+              : null
+          }
         />
         {match.opponentMatchId && (
           <TeamPanel match={opponent} players={oppPlayers} isMine={false} />

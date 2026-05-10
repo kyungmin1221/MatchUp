@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Copy, LogOut, Plus, Trash2, Vote } from 'lucide-react';
+import { ArrowLeft, Calendar, Copy, LogOut, MessageSquare, Plus, Trash2 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import PollCard from '@/components/PollCard';
 import CreatePollDialog from '@/components/CreatePollDialog';
@@ -22,6 +23,17 @@ export default function GroupDetail() {
   const { group, loading } = useGroup(groupId);
   const { polls } = useGroupPolls(groupId);
   const { matches } = useGroupMatches(groupId);
+
+  // 매치에 연결된 모집 투표는 매치 상세에서 표시. 그 외 (일반 의견 + 매치 미연결 단독 모집)는 여기서.
+  const opinionPolls = useMemo(() => polls.filter((p) => !p.matchId), [polls]);
+  // 매치별 모집 투표 매핑 (매치 카드의 모집 인원 표시용)
+  const recruitingByMatch = useMemo(() => {
+    const map = {};
+    polls.forEach((p) => {
+      if (p.matchId) map[p.matchId] = p;
+    });
+    return map;
+  }, [polls]);
   const { data: members = [] } = useMembers(group?.memberUids);
 
   const isOwner = !!user && group?.ownerUid === user.uid;
@@ -135,36 +147,7 @@ export default function GroupDetail() {
       <section className="mb-8">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Vote className="h-5 w-5" /> 투표
-          </h2>
-          <CreatePollDialog
-            groupId={groupId}
-            trigger={
-              <Button size="sm" variant="outline">
-                <Plus className="mr-1 h-4 w-4" /> 새 투표
-              </Button>
-            }
-          />
-        </div>
-        {polls.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              아직 진행 중인 투표가 없어요.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {polls.map((p) => (
-              <PollCard key={p.id} poll={p} group={group} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Calendar className="h-5 w-5" /> 매치
+            <Calendar className="h-5 w-5" /> 매치 관리
           </h2>
           <CreateMatchDialog
             groupId={groupId}
@@ -183,24 +166,62 @@ export default function GroupDetail() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {matches.map((m) => (
-              <Link key={m.id} to={`/groups/${groupId}/matches/${m.id}`}>
-                <Card className="transition hover:border-primary/50">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base">{m.title}</CardTitle>
-                      {m.opponentMatchId && (
-                        <Badge variant="default">상대팀 연결</Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="text-sm text-muted-foreground">
-                    {m.scheduledAt && <p> {formatDateTime(m.scheduledAt)}</p>}
-                    {m.location && <p>📍 {m.location}</p>}
-                    <p>👥 {m.homeTeam.playerUids.length}명 참가</p>
-                  </CardContent>
-                </Card>
-              </Link>
+            {matches.map((m) => {
+              const recruitingPoll = recruitingByMatch[m.id];
+              const attendCount =
+                recruitingPoll?.options?.find((o) => o.attendance)?.voterUids?.length ?? 0;
+              return (
+                <Link key={m.id} to={`/groups/${groupId}/matches/${m.id}`}>
+                  <Card className="transition hover:border-primary/50">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-base">{m.title}</CardTitle>
+                        <div className="flex flex-wrap gap-1">
+                          {recruitingPoll && <Badge>모집 중 · {attendCount}명</Badge>}
+                          {m.opponentMatchId && <Badge variant="outline">대항전</Badge>}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="text-sm text-muted-foreground">
+                      {m.scheduledAt && <p>{formatDateTime(m.scheduledAt)}</p>}
+                      {m.location && <p>📍 {m.location}</p>}
+                      <p>👥 {m.homeTeam.playerUids.length}명 참가</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <MessageSquare className="h-5 w-5" /> 투표
+          </h2>
+          <CreatePollDialog
+            groupId={groupId}
+            trigger={
+              <Button size="sm" variant="outline">
+                <Plus className="mr-1 h-4 w-4" /> 새 투표
+              </Button>
+            }
+          />
+        </div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          새 매치 생성 시에도 투표를 만들 수 있어요. 
+        </p>
+        {opinionPolls.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              아직 의견 투표가 없어요.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {opinionPolls.map((p) => (
+              <PollCard key={p.id} poll={p} group={group} />
             ))}
           </div>
         )}
