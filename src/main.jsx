@@ -18,11 +18,27 @@ const updateSW = registerSW({
   }
 });
 
-// 1분마다 업데이트 체크 — PWA 가 standalone 으로 떠 있는 상황에서도 빠르게 새 빌드 받기 위함.
 if (typeof window !== 'undefined') {
+  // 1분마다 업데이트 체크 — PWA 가 standalone 으로 떠 있는 상황에서도 빠르게 새 빌드 받기 위함.
   setInterval(() => {
     updateSW?.();
   }, 60 * 1000);
+
+  // 새 SW 가 페이지 제어를 시작하는 순간 자동 reload (옛 JS 가 화면에 남아 있는 현상 방지).
+  // 첫 방문 시 SW 가 처음 controller 가 되는 순간은 reload 하지 않는다.
+  if ('serviceWorker' in navigator) {
+    let hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController) {
+        hadController = true;
+        return;
+      }
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    });
+  }
 }
 
 const queryClient = new QueryClient({
