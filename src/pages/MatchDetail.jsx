@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Share2, Trash2 } from 'lucide-react';
+import { ArrowLeft, LogOut, Share2, Trash2 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import TeamPanel from '@/components/TeamPanel';
 import PollCard from '@/components/PollCard';
@@ -11,6 +11,7 @@ import { useMatch } from '@/features/match/hooks';
 import { useRecruitingPollByMatch } from '@/features/poll/hooks';
 import {
   deleteMatch,
+  leaveMatchAsAway,
   togglePlayer,
   updateFormation,
   updateMatchKind
@@ -34,10 +35,11 @@ export default function MatchDetail() {
   const { group: ourGroup } = useGroup(match?.groupId);
   const isOwner = !!user && ourGroup?.ownerUid === user.uid;
 
-  // 본인이 home 측인지 away 측인지 결정
+  // 본인이 home 측인지 away 측인지 결정.
+  // away (awayMemberUids) 가 우선 — 매치 초대 링크로 합류한 사용자는 home 그룹 멤버이기도 해도 away 로 처리.
   const isHomeMember = !!user && (ourGroup?.memberUids ?? []).includes(user.uid);
   const isAwayMember = !!user && (match?.awayMemberUids ?? []).includes(user.uid);
-  const mySide = isHomeMember ? 'home' : isAwayMember ? 'away' : null;
+  const mySide = isAwayMember ? 'away' : isHomeMember ? 'home' : null;
 
   const homePlayerUids = match?.homeTeam?.playerUids ?? [];
   const awayPlayerUids = match?.awayTeam?.playerUids ?? [];
@@ -122,6 +124,22 @@ export default function MatchDetail() {
     }
   };
 
+  const handleLeaveMatch = async () => {
+    if (!user) return;
+    if (
+      !confirm(
+        '이 매치를 나갈까요?\n명단·포메이션에서 빠지고 더 이상 매치를 볼 수 없어요. 다시 들어가려면 합류 링크가 필요해요.'
+      )
+    )
+      return;
+    try {
+      await leaveMatchAsAway({ matchId, uid: user.uid });
+      navigate('/groups', { replace: true });
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
   if (loading) {
     return (
       <AppShell>
@@ -170,6 +188,16 @@ export default function MatchDetail() {
           {hasOpponent && match.awayInviteCode && mySide === 'home' && (
             <Button variant="outline" size="sm" onClick={copyOpponentJoinLink}>
               <Share2 className="mr-1 h-4 w-4" /> 상대팀 합류 링크
+            </Button>
+          )}
+          {mySide === 'away' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLeaveMatch}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            >
+              <LogOut className="mr-1 h-4 w-4" /> 매치 나가기
             </Button>
           )}
           {isOwner && (

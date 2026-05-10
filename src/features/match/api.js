@@ -126,7 +126,24 @@ export async function createMatchFromPoll({
   return ref;
 }
 
+// away 멤버가 매치에서 완전히 빠진다. awayMemberUids + awayTeam.playerUids + 포메이션 슬롯 정리.
+export async function leaveMatchAsAway({ matchId, uid }) {
+  const ref = doc(db, 'matches', matchId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data();
+  const positions = (data.awayTeam?.formation?.positions ?? []).map((p) =>
+    p.playerUid === uid ? { ...p, playerUid: null } : p
+  );
+  await updateDoc(ref, {
+    awayMemberUids: arrayRemove(uid),
+    'awayTeam.playerUids': arrayRemove(uid),
+    'awayTeam.formation.positions': positions
+  });
+}
+
 // 매치 합류 — awayInviteCode 로 매치를 찾아 awayMemberUids 에 본인을 추가한다.
+// 매치 만든 사람(createdBy)은 home 측이므로 awayMemberUids 에 추가하지 않고 매치 id 만 반환.
 export async function joinMatchByCode({ awayInviteCode, uid }) {
   const q = query(
     collection(db, 'matches'),
@@ -136,6 +153,7 @@ export async function joinMatchByCode({ awayInviteCode, uid }) {
   if (snap.empty) throw new Error('매치 합류 코드를 찾을 수 없어요.');
   const d = snap.docs[0];
   const data = d.data();
+  if (uid === data.createdBy) return d.id;
   if (data.awayMemberUids?.includes(uid)) return d.id;
   await updateDoc(d.ref, { awayMemberUids: arrayUnion(uid) });
   return d.id;
