@@ -15,6 +15,8 @@ import PollCard from '@/components/PollCard';
 import CreatePollDialog from '@/components/CreatePollDialog';
 import CreateMatchDialog from '@/components/CreateMatchDialog';
 import IntroDialog, { hasSeenIntro, markIntroSeen } from '@/components/IntroDialog';
+import MembersDialog from '@/components/MembersDialog';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
@@ -50,6 +52,7 @@ export default function GroupDetail() {
 
   // 처음 그룹에 들어온 사용자에게 한 번만 자동으로 가이드를 띄움
   const [introOpen, setIntroOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   useEffect(() => {
     if (!hasSeenIntro()) {
       setIntroOpen(true);
@@ -154,17 +157,40 @@ export default function GroupDetail() {
         </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        {members.map((m) => (
-          <div
-            key={m.id}
-            className="flex items-center gap-1.5 rounded-full bg-secondary px-2 py-1 text-xs"
-          >
-            <Avatar src={m.photoURL} name={m.displayName} size={18} />
-            <span>{m.displayName}</span>
-          </div>
-        ))}
-      </div>
+      <button
+        type="button"
+        onClick={() => setMembersOpen(true)}
+        className="mb-6 inline-flex items-center gap-3 rounded-full border bg-secondary/40 px-3 py-2 text-sm transition hover:border-primary/40"
+      >
+        <div className="flex -space-x-2">
+          {members.slice(0, 5).map((m) => (
+            <Avatar
+              key={m.id}
+              src={m.photoURL}
+              name={m.displayName}
+              size={28}
+              className="ring-2 ring-background"
+            />
+          ))}
+          {members.length === 0 && (
+            <span className="text-xs text-muted-foreground">멤버 정보 불러오는 중…</span>
+          )}
+        </div>
+        {members.length > 0 && (
+          <span className="flex items-center gap-1 text-foreground">
+            {members.length}명
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          </span>
+        )}
+      </button>
+
+      <MembersDialog
+        open={membersOpen}
+        onOpenChange={setMembersOpen}
+        members={members}
+        ownerUid={group.ownerUid}
+        currentUserUid={user?.uid}
+      />
 
       <section className="mb-8">
         <div className="mb-3 flex items-center justify-between">
