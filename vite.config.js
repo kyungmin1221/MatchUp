@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'favicon.ico', 'robots.txt'],
+      includeAssets: ['icon.svg', 'icon_180.png', 'icon_192.png'],
       manifest: {
         name: 'MatchUp',
         short_name: 'MatchUp',
@@ -19,8 +19,10 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         lang: 'ko',
+        categories: ['sports', 'social', 'lifestyle'],
         icons: [
-          { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }
+          { src: '/icon_192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon_192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' }
         ]
       },
       workbox: {
