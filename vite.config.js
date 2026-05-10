@@ -26,6 +26,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
         navigateFallbackDenylist: [/^\/api/],
+        // 새 빌드 감지 시 즉시 활성화 + 모든 탭 즉시 새 SW 가 제어 + 옛 캐시 청소
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*$/,
