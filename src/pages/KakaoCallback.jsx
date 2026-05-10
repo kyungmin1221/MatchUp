@@ -44,7 +44,7 @@ export default function KakaoCallback() {
           <a href="/" className="inline-block text-primary underline">처음으로</a>
         </div>
       ) : (
-        <p className="text-muted-foreground">카카오 로그인 처리 중…</p>
+        <p className="text-muted-foreground">카카오 로그인 중..</p>
       )}
     </div>
   );

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppShell from '@/components/AppShell';
-import { Button } from '@/components/ui/button';
 import { useAuthLoading, useUser } from '@/features/auth/hooks';
 import { signInWithGoogle } from '@/features/auth/api';
 import { signInWithKakao } from '@/features/auth/kakao';
 import { joinMatchByCode } from '@/features/match/api';
+import { GoogleIcon, KakaoIcon } from '@/components/BrandIcons';
 
 export default function MatchInvite() {
   const [params] = useSearchParams();
@@ -82,20 +82,22 @@ export default function MatchInvite() {
         </p>
 
         <div className="mt-6 w-full max-w-sm space-y-3">
-          <Button
-            size="lg"
-            className="w-full h-14 text-base"
+          <button
+            type="button"
             onClick={handleGoogle}
             disabled={!!pending}
+            className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-md bg-white text-[#1f1f1f] text-base font-medium ring-1 ring-black/10 hover:bg-gray-50 transition disabled:opacity-60"
           >
+            <GoogleIcon className="h-5 w-5" />
             {pending === 'google' ? '로그인 중…' : 'Google 로 시작하기'}
-          </Button>
+          </button>
           <button
             type="button"
             onClick={handleKakao}
             disabled={!!pending}
-            className="w-full h-14 rounded-md bg-[#FEE500] text-[#191919] text-base font-semibold hover:brightness-95 transition disabled:opacity-60"
+            className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-md bg-[#FEE500] text-[#191919] text-base font-semibold hover:brightness-95 transition disabled:opacity-60"
           >
+            <KakaoIcon className="h-5 w-5" />
             {pending === 'kakao' ? '로그인 중…' : '카카오로 시작하기'}
           </button>
         </div>

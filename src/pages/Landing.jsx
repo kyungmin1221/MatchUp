@@ -1,14 +1,33 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { signInWithGoogle } from '@/features/auth/api';
 import { signInWithKakao } from '@/features/auth/kakao';
 import { useUser } from '@/features/auth/hooks';
+import { GoogleIcon, KakaoIcon } from '@/components/BrandIcons';
+
+const LAST_PROVIDER_KEY = 'matchup.lastLoginProvider';
+
+function getLastProvider() {
+  try {
+    return localStorage.getItem(LAST_PROVIDER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setLastProvider(p) {
+  try {
+    localStorage.setItem(LAST_PROVIDER_KEY, p);
+  } catch {
+    /* noop */
+  }
+}
 
 export default function Landing() {
   const user = useUser();
   const navigate = useNavigate();
-  const [pending, setPending] = useState(null); // 'google' | 'kakao' | null
+  const [pending, setPending] = useState(null);
+  const [lastProvider] = useState(() => getLastProvider());
 
   useEffect(() => {
     if (user) navigate('/groups', { replace: true });
@@ -16,6 +35,7 @@ export default function Landing() {
 
   const handleGoogle = async () => {
     setPending('google');
+    setLastProvider('google');
     try {
       await signInWithGoogle();
     } catch (e) {
@@ -28,49 +48,80 @@ export default function Landing() {
 
   const handleKakao = async () => {
     setPending('kakao');
+    setLastProvider('kakao');
     try {
       await signInWithKakao();
     } catch (e) {
       console.error(e);
       alert(e?.message ?? '카카오 로그인에 실패했어요. 다시 시도해주세요.');
-    } finally {
       setPending(null);
     }
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center">
-      <div className="mb-10">
-        <div className="mx-auto mb-5 h-20 w-20 rounded-3xl bg-primary/15 flex items-center justify-center">
-          <span className="text-5xl">⚽</span>
-        </div>
-        <h1 className="text-5xl font-bold tracking-tight">MatchUp</h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          단톡방에 흩어지는 풋살/축구 정보를<br />한곳에서 관리 해보세요 !
+    <div className="min-h-[100dvh] flex flex-col items-center justify-between bg-white px-6 py-14 text-black">
+      {/* spacer */}
+      <div className="flex-1" />
+
+      {/* 로고 + 카피 */}
+      <div className="text-center">
+        <h1
+          className="text-7xl font-black italic tracking-tighter"
+          style={{ fontFamily: '"Pretendard", -apple-system, BlinkMacSystemFont, sans-serif' }}
+        >
+          MatchUp
+        </h1>
+        <p className="mt-6 text-base text-gray-500">
+          단톡에 흩어진 풋살 약속,
+          <br />
+          한 페이지로 다시 모아요.
         </p>
       </div>
 
+      <div className="flex-1" />
+
+      {/* 로그인 버튼 */}
       <div className="w-full max-w-sm space-y-3">
-        <Button
-          size="lg"
-          className="w-full h-14 text-base"
-          onClick={handleGoogle}
-          disabled={!!pending}
-        >
-          {pending === 'google' ? '로그인 중…' : 'Google 로 시작하기'}
-        </Button>
-        <button
-          type="button"
-          onClick={handleKakao}
-          disabled={!!pending}
-          className="w-full h-14 rounded-md bg-[#FEE500] text-[#191919] text-base font-semibold hover:brightness-95 transition disabled:opacity-60"
-        >
-          {pending === 'kakao' ? '로그인 중…' : '카카오로 시작하기'}
-        </button>
+        {/* 카카오 — 최근 로그인 뱃지 포함 가능 */}
+        <div className="relative">
+          {lastProvider === 'kakao' && (
+            <span className="absolute -top-3 right-4 z-10 rounded-full bg-emerald-400 px-2.5 py-0.5 text-[11px] font-medium text-white shadow">
+              최근 로그인
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleKakao}
+            disabled={!!pending}
+            className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-xl bg-[#FEE500] text-[#191919] text-base font-bold hover:brightness-95 transition disabled:opacity-60"
+          >
+            <KakaoIcon className="h-5 w-5" />
+            {pending === 'kakao' ? '로그인 중…' : '카카오로 3초만에 시작하기'}
+          </button>
+        </div>
+
+        {/* Google */}
+        <div className="relative">
+          {lastProvider === 'google' && (
+            <span className="absolute -top-3 right-4 z-10 rounded-full bg-emerald-400 px-2.5 py-0.5 text-[11px] font-medium text-white shadow">
+              최근 로그인
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleGoogle}
+            disabled={!!pending}
+            className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-xl bg-white text-[#1f1f1f] text-base font-medium ring-1 ring-black/15 hover:bg-gray-50 transition disabled:opacity-60"
+          >
+            <GoogleIcon className="h-5 w-5" />
+            {pending === 'google' ? '로그인 중…' : 'Google로 계속하기'}
+          </button>
+        </div>
       </div>
 
-      <p className="mt-8 text-sm text-muted-foreground">
-        모집 투표 · 일정 관리 · 포메이션 · 상대팀 공유를 한곳에서
+      {/* 푸터 */}
+      <p className="mt-10 text-xs text-gray-400">
+        모집 투표 · 일정 · 명단 · 포메이션 · 상대팀 공유를 한곳에서
       </p>
     </div>
   );
