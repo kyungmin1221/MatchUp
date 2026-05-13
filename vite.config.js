@@ -3,9 +3,32 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 
+// 빌드 ID — 매 빌드마다 새로 찍힘. 클라이언트가 이 값을 /version.json 과 비교해서
+// 옛 버전 캐시에 갇혀 있으면 SW/캐시 다 비우고 강제 리로드.
+const BUILD_ID = String(Date.now());
+
+// /version.json 을 dist 에 같이 떨굼.
+function versionJsonPlugin() {
+  return {
+    name: 'matchup-version-json',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify({ buildId: BUILD_ID })
+      });
+    }
+  };
+}
+
 export default defineConfig({
+  define: {
+    __BUILD_ID__: JSON.stringify(BUILD_ID)
+  },
   plugins: [
     react(),
+    versionJsonPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icon_180.png', 'icon_192.png', 'icon_512.png'],
@@ -29,12 +52,18 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
-        navigateFallbackDenylist: [/^\/api/],
+        globIgnores: ['version.json'],
+        navigateFallbackDenylist: [/^\/api/, /^\/version\.json/],
         // 새 빌드 감지 시 즉시 활성화 + 모든 탭 즉시 새 SW 가 제어 + 옛 캐시 청소
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            // /version.json — 캐시 절대 안 함. 빌드 버전 체크용이라 매번 최신 필요.
+            urlPattern: ({ url }) => url.pathname === '/version.json',
+            handler: 'NetworkOnly'
+          },
           {
             // HTML 페이지(SPA 네비게이션) → NetworkFirst.
             // 새 빌드가 배포되면 SW 업데이트를 기다리지 않고 다음 페이지 진입 시 즉시 최신 HTML 을 받음.
