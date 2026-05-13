@@ -7,6 +7,7 @@ import Join from './pages/Join';
 import MatchInvite from './pages/MatchInvite';
 import KakaoCallback from './pages/KakaoCallback';
 import Admin from './pages/Admin';
+import AdminFeedback from './pages/AdminFeedback';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -46,6 +47,14 @@ export default function AppRoutes() {
         element={
           <AdminRoute>
             <Admin />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/feedback"
+        element={
+          <AdminRoute>
+            <AdminFeedback />
           </AdminRoute>
         }
       />

@@ -75,8 +75,8 @@ export default function Landing() {
           MatchLink
         </h1>
         <p className="mt-6 text-base text-gray-500">
-          단톡에 흩어진 풋살 & 축구 약속,
-          <br />한 페이지로 다시 모아요.
+          단톡에 흩어진 풋살 & 축구 약속
+          <br />한 페이지로 다시 모아요
         </p>
       </div>
 
@@ -116,7 +116,7 @@ export default function Landing() {
             className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-xl bg-white text-[#1f1f1f] text-base font-medium ring-1 ring-black/15 hover:bg-gray-50 transition disabled:opacity-60"
           >
             <GoogleIcon className="h-5 w-5" />
-            {pending === 'google' ? '로그인 중…' : 'Google로 계속하기'}
+            {pending === 'google' ? '로그인 중…' : 'Google로 시작하기'}
           </button>
         </div>
       </div>

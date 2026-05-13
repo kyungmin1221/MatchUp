@@ -15,6 +15,13 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/groups/$(groupId)).data.ownerUid;
     }
 
+    // 관리자 권한: admins/{uid} 도큐먼트가 존재하면 어드민.
+    // 콘솔에서 직접 만들어야 함 (allow write: false). 클라이언트의 VITE_ADMIN_UIDS 와 별개로
+    // Firestore 룰에서 사용하는 서버 측 권한 체크용.
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admins/$(uid()));
+    }
+
     // users
     match /users/{userId} {
       allow read: if isSignedIn();
@@ -72,6 +79,23 @@ service cloud.firestore {
         uid() in get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.memberUids;
       allow update: if isSignedIn() && (isHomeOrAway() || isAwayJoinUpdate());
       allow delete: if isSignedIn() && uid() == groupOwner(resource.data.groupId);
+    }
+
+    // admins/{uid} — 관리자 마커. 콘솔에서 수동 생성 (allow write: false).
+    // 모든 로그인 사용자가 read 가능 — exists() 룰 평가에 필요.
+    match /admins/{adminUid} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // feedback/{id} — 사용자 피드백
+    //   create: 본인 명의로 누구나
+    //   read/update/delete: 어드민만 (본인 피드백은 본인도 read 가능)
+    match /feedback/{feedbackId} {
+      allow read: if isSignedIn() && (isAdmin() || uid() == resource.data.authorUid);
+      allow create: if isSignedIn() && uid() == request.resource.data.authorUid;
+      allow update: if isSignedIn() && isAdmin();
+      allow delete: if isSignedIn() && isAdmin();
     }
   }
 }

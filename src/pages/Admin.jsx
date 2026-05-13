@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MessageSquare, ShieldCheck } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAllUsers } from '@/features/admin/hooks';
@@ -26,13 +27,20 @@ export default function Admin() {
         </Link>
       </div>
 
-      <div className="mb-6">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold">
-          <ShieldCheck className="h-6 w-6" /> 가입자 관리
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          MatchLink 에 로그인한 모든 사용자 · 총 {users.length}명
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold">
+            <ShieldCheck className="h-6 w-6" /> 가입자 관리
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            MatchLink 에 로그인한 모든 사용자 · 총 {users.length}명
+          </p>
+        </div>
+        <Link to="/admin/feedback">
+          <Button variant="outline" size="sm">
+            <MessageSquare className="mr-1 h-4 w-4" /> 피드백 보기
+          </Button>
+        </Link>
       </div>
 
       {error && (

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Swords, Users } from 'lucide-react';
+import { BookOpen, MessageSquare, Plus, Swords, Users } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import IntroDialog from '@/components/IntroDialog';
+import FeedbackDialog from '@/components/FeedbackDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ export default function Groups() {
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [introOpen, setIntroOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
 
@@ -78,6 +80,9 @@ export default function Groups() {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setIntroOpen(true)}>
             <BookOpen className="mr-1 h-4 w-4" /> 가이드
+          </Button>
+          <Button variant="outline" onClick={() => setFeedbackOpen(true)}>
+            <MessageSquare className="mr-1 h-4 w-4" /> 피드백
           </Button>
           <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
             <DialogTrigger asChild>
@@ -196,6 +201,7 @@ export default function Groups() {
       )}
 
       <IntroDialog open={introOpen} onOpenChange={setIntroOpen} />
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </AppShell>
   );
 }

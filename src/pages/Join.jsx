@@ -132,7 +132,7 @@ export default function Join() {
               className="inline-flex w-full h-14 items-center justify-center gap-2 rounded-xl bg-white text-[#1f1f1f] text-base font-medium ring-1 ring-black/15 hover:bg-gray-50 transition disabled:opacity-60"
             >
               <GoogleIcon className="h-5 w-5" />
-              {pending === 'google' ? '로그인 중…' : 'Google로 계속하기'}
+              {pending === 'google' ? '로그인 중…' : 'Google로 시작하기'}
             </button>
           </div>
         </div>
