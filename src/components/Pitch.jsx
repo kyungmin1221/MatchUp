@@ -216,16 +216,31 @@ export default function Pitch({ formation, players = [], onChange, readOnly = fa
           style={{
             aspectRatio: '2/3',
             background:
-              'linear-gradient(180deg, #064e3b 0%, #065f46 50%, #047857 100%)'
+              'repeating-linear-gradient(180deg, rgba(255,255,255,0.045) 0 22px, transparent 22px 44px), linear-gradient(180deg, #064e3b 0%, #065f46 50%, #047857 100%)'
           }}
         >
           <div className="absolute inset-3 rounded-md border border-white/30" />
           <div className="absolute inset-x-3 top-1/2 h-px bg-white/30" />
           <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30" />
-          {/* 위쪽(상대 골대) 페널티 박스 */}
+          {/* 센터 스팟 */}
+          <div className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40" />
+          {/* 위쪽(상대 골대) 페널티 박스 + 골 에어리어 */}
           <div className="absolute left-1/2 top-3 h-16 w-32 -translate-x-1/2 border border-white/30 border-t-0" />
-          {/* 아래쪽(우리 골대) 페널티 박스 */}
+          <div className="absolute left-1/2 top-3 h-7 w-[60px] -translate-x-1/2 border border-white/30 border-t-0" />
+          {/* 아래쪽(우리 골대) 페널티 박스 + 골 에어리어 */}
           <div className="absolute bottom-3 left-1/2 h-16 w-32 -translate-x-1/2 border border-white/30 border-b-0" />
+          <div className="absolute bottom-3 left-1/2 h-7 w-[60px] -translate-x-1/2 border border-white/30 border-b-0" />
+          {/* 코너 아크 */}
+          <svg
+            viewBox="0 0 100 150"
+            preserveAspectRatio="none"
+            className="pointer-events-none absolute inset-3 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)]"
+          >
+            <path d="M0 4 A 4 4 0 0 1 4 0" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.4" />
+            <path d="M96 0 A 4 4 0 0 1 100 4" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.4" />
+            <path d="M100 146 A 4 4 0 0 1 96 150" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.4" />
+            <path d="M4 150 A 4 4 0 0 1 0 146" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.4" />
+          </svg>
 
           {formation.positions.map((slot) => (
             <Slot

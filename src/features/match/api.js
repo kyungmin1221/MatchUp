@@ -4,6 +4,7 @@ import {
   arrayUnion,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -232,6 +233,20 @@ export function subscribeMyAwayMatches(uid, cb) {
 export async function getMatch(matchId) {
   const snap = await getDoc(doc(db, 'matches', matchId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+// MOM 투표: matches/{id}.momVotes 맵에 { voterUid: votedForUid } 형태로 기록.
+// 본인 표(voter === votedFor)는 서버에 저장되지만 tally 단계에서 제외.
+export async function voteMom({ matchId, voterUid, votedFor }) {
+  await updateDoc(doc(db, 'matches', matchId), {
+    [`momVotes.${voterUid}`]: votedFor
+  });
+}
+
+export async function unvoteMom({ matchId, voterUid }) {
+  await updateDoc(doc(db, 'matches', matchId), {
+    [`momVotes.${voterUid}`]: deleteField()
+  });
 }
 
 // 매치 삭제. 모집 투표 있으면 같이 삭제.

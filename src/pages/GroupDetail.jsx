@@ -16,6 +16,8 @@ import CreatePollDialog from '@/components/CreatePollDialog';
 import CreateMatchDialog from '@/components/CreateMatchDialog';
 import IntroDialog, { hasSeenIntro, markIntroSeen } from '@/components/IntroDialog';
 import MembersDialog from '@/components/MembersDialog';
+import KickoffHero from '@/components/KickoffHero';
+import { getMomPhase, tallyMom } from '@/features/match/mom';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +48,17 @@ export default function GroupDetail() {
     });
     return map;
   }, [polls]);
+  // 가장 가까운 미래 매치 (Kick-off 히어로용)
+  const nextMatch = useMemo(() => {
+    const cutoff = Date.now() - 4 * 3600 * 1000; // 매치 시작 4시간 전까지는 'next' 로 노출
+    return matches
+      .map((m) => ({
+        m,
+        ms: m.scheduledAt?.toMillis?.() ?? (m.scheduledAt ? new Date(m.scheduledAt).getTime() : 0)
+      }))
+      .filter(({ ms }) => ms > cutoff)
+      .sort((a, b) => a.ms - b.ms)[0]?.m;
+  }, [matches]);
   const { data: members = [] } = useMembers(group?.memberUids);
 
   const isOwner = !!user && group?.ownerUid === user.uid;
@@ -192,6 +205,13 @@ export default function GroupDetail() {
         currentUserUid={user?.uid}
       />
 
+      {nextMatch && (
+        <KickoffHero
+          match={nextMatch}
+          onClick={() => navigate(`/groups/${groupId}/matches/${nextMatch.id}`)}
+        />
+      )}
+
       <section className="mb-8">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -218,6 +238,11 @@ export default function GroupDetail() {
               const recruitingPoll = recruitingByMatch[m.id];
               const attendCount =
                 recruitingPoll?.options?.find((o) => o.attendance)?.voterUids?.length ?? 0;
+              const momPhase = getMomPhase(m).phase;
+              const iAmMom =
+                momPhase === 'closed' &&
+                !!user &&
+                tallyMom(m.momVotes).winners.includes(user.uid);
               return (
                 <Link key={m.id} to={`/groups/${groupId}/matches/${m.id}`}>
                   <Card className="transition hover:border-primary/50">
@@ -225,6 +250,11 @@ export default function GroupDetail() {
                       <div className="flex items-start justify-between gap-2">
                         <CardTitle className="text-base">{m.title}</CardTitle>
                         <div className="flex flex-wrap gap-1">
+                          {iAmMom && (
+                            <Badge className="bg-amber-400 text-amber-950 hover:bg-amber-400">
+                              🏆 MOM
+                            </Badge>
+                          )}
                           {recruitingPoll && <Badge>모집 중 · {attendCount}명</Badge>}
                           {m.opponentMatchId && <Badge variant="outline">대항전</Badge>}
                         </div>

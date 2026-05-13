@@ -1,9 +1,12 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, LogOut, Share2, Trash2 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import TeamPanel from '@/components/TeamPanel';
 import PollCard from '@/components/PollCard';
+import MatchScoreboard from '@/components/MatchScoreboard';
+import MomBanner from '@/components/MomBanner';
+import MomDialog from '@/components/MomDialog';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/features/auth/hooks';
 import { useGroup, useMembers } from '@/features/group/hooks';
@@ -14,14 +17,15 @@ import {
   leaveMatchAsAway,
   togglePlayer,
   updateFormation,
-  updateMatchKind
+  updateMatchKind,
+  voteMom
 } from '@/features/match/api';
+import { getMomPhase, tallyMom } from '@/features/match/mom';
 import {
   DEFAULT_FORMATION,
   buildFormation,
   formationsByKind
 } from '@/features/formation/templates';
-import { formatDateTime } from '@/lib/utils';
 
 const FALLBACK_GROUP_ID_PARAM = '_';
 
@@ -140,6 +144,81 @@ export default function MatchDetail() {
     }
   };
 
+  // ─── MOM (Man of the Match) ──────────────────────────────
+  const momPhase = useMemo(() => getMomPhase(match), [match]);
+  const momResult = useMemo(() => tallyMom(match?.momVotes), [match?.momVotes]);
+  const myVote = user ? match?.momVotes?.[user.uid] ?? null : null;
+  const isMom = !!user && momResult.winners.includes(user.uid);
+  const dismissKey = `matchup.momDismissed.${matchId}`;
+  const [momDismissed, setMomDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(dismissKey) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const [momDialogOpen, setMomDialogOpen] = useState(false);
+
+  // 본인 팀 참가자만 후보. 결과 단계에서는 양 팀에서 모두 이름을 찾아야 하므로 별도 lookup 사용.
+  const myTeamCandidates = mySide === 'away' ? awayPlayers : homePlayers;
+  const allRosterById = useMemo(() => {
+    const map = {};
+    homePlayers.forEach((p) => { map[p.id] = p; });
+    awayPlayers.forEach((p) => { map[p.id] = p; });
+    return map;
+  }, [homePlayers, awayPlayers]);
+  const winnerNames = momResult.winners.map(
+    (uid) => allRosterById[uid]?.displayName ?? '알 수 없음'
+  );
+
+  // 투표 가능 조건: 본인이 home/away 참가자 + 본인 팀에 후보가 있음
+  const canVote =
+    momPhase.phase === 'voting' && !!mySide && myTeamCandidates.length > 0;
+
+  // 자동 팝업 — voting 상태 + 미투표 + 미dismiss + 투표 가능
+  useEffect(() => {
+    if (canVote && !myVote && !momDismissed) {
+      setMomDialogOpen(true);
+    }
+  }, [canVote, myVote, momDismissed]);
+
+  const handleMomDismiss = () => {
+    try {
+      localStorage.setItem(dismissKey, '1');
+    } catch {
+      /* ignore */
+    }
+    setMomDismissed(true);
+    setMomDialogOpen(false);
+  };
+
+  const handleMomVote = async (votedFor) => {
+    if (!user) return;
+    try {
+      await voteMom({ matchId, voterUid: user.uid, votedFor });
+      setMomDialogOpen(false);
+    } catch (e) {
+      alert(e.message ?? 'MOM 투표에 실패했어요.');
+    }
+  };
+
+  const handleMomShare = async () => {
+    const lines = [`[MatchUp] ${match.title} MOM 🏆`];
+    if (winnerNames.length === 1) {
+      lines.push(`${winnerNames[0]} (${momResult.max}표)`);
+    } else if (winnerNames.length > 1) {
+      lines.push(`공동 MOM · ${winnerNames.join(', ')} (각 ${momResult.max}표)`);
+    } else {
+      lines.push('투표 없음');
+    }
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      alert('카톡 공유 텍스트를 복사했어요.');
+    } catch {
+      alert('복사에 실패했어요.');
+    }
+  };
+
   if (loading) {
     return (
       <AppShell>
@@ -173,16 +252,29 @@ export default function MatchDetail() {
         </Link>
       </div>
 
+      <MatchScoreboard match={match} ourGroupName={ourGroup?.name} />
+
+      {(momPhase.phase === 'voting' || momPhase.phase === 'closed') && (
+        <MomBanner
+          phase={momPhase.phase}
+          hasVoted={!!myVote}
+          isMom={isMom}
+          isOwner={isOwner}
+          winners={momResult.winners}
+          winnerNames={winnerNames}
+          voteCount={momResult.max}
+          deadlineMs={momPhase.deadlineMs}
+          onOpen={() => setMomDialogOpen(true)}
+          onShare={handleMomShare}
+        />
+      )}
+
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">{match.title}</h1>
-          <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
-            {match.scheduledAt && <p>{formatDateTime(match.scheduledAt)}</p>}
-            {match.location && <p>📍 {match.location}</p>}
-            {mySide === 'away' && (
-              <p className="text-primary">상대팀(어웨이)으로 참여 중</p>
-            )}
-          </div>
+          <h1 className="text-xl font-semibold leading-tight">{match.title}</h1>
+          {mySide === 'away' && (
+            <p className="mt-1 text-sm font-semibold text-primary">상대팀(어웨이)으로 참여 중</p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {hasOpponent && match.awayInviteCode && mySide === 'home' && (
@@ -293,6 +385,18 @@ export default function MatchDetail() {
           </>
         )}
       </div>
+
+      <MomDialog
+        open={momDialogOpen}
+        onOpenChange={setMomDialogOpen}
+        candidates={myTeamCandidates}
+        myVote={myVote}
+        matchTitle={match.title}
+        isMyselfCandidate={!!user && myTeamCandidates.some((p) => p.id === user.uid)}
+        onVote={handleMomVote}
+        onDismiss={handleMomDismiss}
+        readOnly={momPhase.phase !== 'voting'}
+      />
     </AppShell>
   );
 }
