@@ -30,9 +30,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // groups: 멤버만 read/update, 누구나 create
+    // groups: 로그인 사용자는 read 가능 (inviteCode 로 그룹 찾기용),
+    //         update 는 멤버 OR 본인 추가만, create 는 누구나, delete 는 owner.
+    // read 가 풀린 이유: joinGroup 이 `where('inviteCode','==',X)` 쿼리로 그룹을 찾는데
+    // "rules are not filters" 원칙상 비멤버는 쿼리가 통째로 거절됨. 그룹 도큐먼트는
+    // name/memberUids/ownerUid/inviteCode/kind 만 갖고 있어 노출 범위 제한적.
     match /groups/{groupId} {
-      allow read: if isSignedIn() && uid() in resource.data.memberUids;
+      allow read: if isSignedIn();
       allow create: if isSignedIn() && uid() in request.resource.data.memberUids;
       allow update: if isSignedIn() && (
         uid() in resource.data.memberUids ||
