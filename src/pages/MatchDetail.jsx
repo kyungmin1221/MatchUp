@@ -7,17 +7,21 @@ import PollCard from '@/components/PollCard';
 import MatchScoreboard from '@/components/MatchScoreboard';
 import MomBanner from '@/components/MomBanner';
 import MomDialog from '@/components/MomDialog';
+import PaymentCard from '@/components/PaymentCard';
+import PaymentSettingsDialog from '@/components/PaymentSettingsDialog';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/features/auth/hooks';
 import { useGroup, useMembers } from '@/features/group/hooks';
 import { useMatch } from '@/features/match/hooks';
 import { useRecruitingPollByMatch } from '@/features/poll/hooks';
 import {
+  clearMatchPayment,
   deleteMatch,
   leaveMatchAsAway,
   togglePlayer,
   updateFormation,
   updateMatchKind,
+  updateMatchPayment,
   voteMom
 } from '@/features/match/api';
 import { getMomPhase, tallyMom } from '@/features/match/mom';
@@ -202,6 +206,25 @@ export default function MatchDetail() {
     }
   };
 
+  // ─── 회비 정산 ──────────────────────────────────────────
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const handlePaymentSave = async (payment) => {
+    try {
+      await updateMatchPayment({ matchId, payment });
+      setPaymentDialogOpen(false);
+    } catch (e) {
+      alert(e.message ?? '회비 저장에 실패했어요.');
+    }
+  };
+  const handlePaymentClear = async () => {
+    try {
+      await clearMatchPayment({ matchId });
+      setPaymentDialogOpen(false);
+    } catch (e) {
+      alert(e.message ?? '회비 삭제에 실패했어요.');
+    }
+  };
+
   const handleMomShare = async () => {
     const lines = [`[MatchUp] ${match.title} MOM 🏆`];
     if (winnerNames.length === 1) {
@@ -334,6 +357,19 @@ export default function MatchDetail() {
         </div>
       )}
 
+      {mySide === 'home' && (
+        <div className="mb-4">
+          <PaymentCard
+            payment={match.payment ?? null}
+            isOwner={isOwner}
+            isParticipant={homePlayerUids.includes(user?.uid)}
+            splitCount={Math.max(1, homePlayerUids.length)}
+            matchTitle={match.title}
+            onEdit={() => setPaymentDialogOpen(true)}
+          />
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         {/* 본인 팀이 항상 좌측에 오도록 mySide 에 따라 순서 변경 */}
         {mySide === 'away' && hasOpponent ? (
@@ -396,6 +432,15 @@ export default function MatchDetail() {
         onVote={handleMomVote}
         onDismiss={handleMomDismiss}
         readOnly={momPhase.phase !== 'voting'}
+      />
+
+      <PaymentSettingsDialog
+        open={paymentDialogOpen}
+        onOpenChange={setPaymentDialogOpen}
+        initial={match.payment ?? null}
+        defaultHolderName={user?.displayName}
+        onSave={handlePaymentSave}
+        onClear={match.payment ? handlePaymentClear : null}
       />
     </AppShell>
   );

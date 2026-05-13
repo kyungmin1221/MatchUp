@@ -235,6 +235,17 @@ export async function getMatch(matchId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
+// 회비 정산: matches/{id}.payment 에 { totalCost, bank, accountNo, holderName, memo } 저장.
+// 수신자는 항상 match.createdBy. 정산 대상은 homeTeam.playerUids.
+// 은행 정보는 user 도큐먼트가 아니라 매치 도큐먼트에 스냅샷 — 매치 멤버만 read 권한이 있어 사생활 누출 ↓
+export async function updateMatchPayment({ matchId, payment }) {
+  await updateDoc(doc(db, 'matches', matchId), { payment });
+}
+
+export async function clearMatchPayment({ matchId }) {
+  await updateDoc(doc(db, 'matches', matchId), { payment: deleteField() });
+}
+
 // MOM 투표: matches/{id}.momVotes 맵에 { voterUid: votedForUid } 형태로 기록.
 // 본인 표(voter === votedFor)는 서버에 저장되지만 tally 단계에서 제외.
 export async function voteMom({ matchId, voterUid, votedFor }) {
