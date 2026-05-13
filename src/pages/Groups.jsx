@@ -34,10 +34,13 @@ export default function Groups() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
 
-  // 초대 링크에서 넘어온 경우 코드 입력 다이얼로그 자동 오픈 (코드는 비워둔 채)
+  // 초대 링크에서 넘어온 경우 코드 입력 다이얼로그 자동 오픈 + URL 의 코드를 prefill
   useEffect(() => {
     if (location.state?.openJoinDialog) {
       setJoinOpen(true);
+      if (location.state.inviteCode) {
+        setCode(String(location.state.inviteCode).toUpperCase());
+      }
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);

@@ -37,7 +37,10 @@ export default function Join() {
 
   useEffect(() => {
     if (loading || !user) return;
-    navigate('/groups', { replace: true, state: { openJoinDialog: true } });
+    navigate('/groups', {
+      replace: true,
+      state: { openJoinDialog: true, inviteCode: code ?? '' }
+    });
   }, [code, user, loading, navigate]);
 
   const handleGoogle = async () => {
@@ -86,7 +89,7 @@ export default function Join() {
               fontFamily: '"Pretendard", -apple-system, BlinkMacSystemFont, sans-serif'
             }}
           >
-            MatchUp
+            MatchLink
           </h1>
           <p className="mt-6 text-base text-gray-700 font-medium">
             그룹에 초대받았어요!

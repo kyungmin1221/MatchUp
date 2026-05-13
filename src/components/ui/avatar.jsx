@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 
 export function Avatar({ src, name, size = 32, className }) {
   const initial = (name ?? '?').trim().charAt(0).toUpperCase();
+  // shrink-0: flex 컨테이너가 가로 폭을 줄여서 세로로 긴 타원이 되는 현상 방지
   if (src) {
     return (
       <img
@@ -9,7 +10,8 @@ export function Avatar({ src, name, size = 32, className }) {
         alt={name}
         width={size}
         height={size}
-        className={cn('rounded-full object-cover ring-1 ring-border', className)}
+        style={{ width: size, height: size }}
+        className={cn('shrink-0 rounded-full object-cover ring-1 ring-border', className)}
         referrerPolicy="no-referrer"
       />
     );
@@ -18,7 +20,7 @@ export function Avatar({ src, name, size = 32, className }) {
     <div
       style={{ width: size, height: size }}
       className={cn(
-        'flex items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-semibold ring-1 ring-border',
+        'flex shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-xs font-semibold ring-1 ring-border',
         className
       )}
     >

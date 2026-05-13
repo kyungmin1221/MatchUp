@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icon_180.png', 'icon_192.png'],
       manifest: {
-        name: 'MatchUp',
-        short_name: 'MatchUp',
+        name: 'MatchLink',
+        short_name: 'MatchLink',
         description: '친구들과 풋살/축구 모임을 한 곳에서 관리',
         theme_color: '#ffffff',
         background_color: '#ffffff',

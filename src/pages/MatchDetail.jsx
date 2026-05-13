@@ -114,7 +114,7 @@ export default function MatchDetail() {
   const copyOpponentJoinLink = async () => {
     if (!match?.awayInviteCode) return;
     const url = `${window.location.origin}/match-invite?code=${match.awayInviteCode}`;
-    const text = `[MatchUp] ${ourGroup?.name ?? ''} - ${match.title} 대항전 합류 링크\n${url}`;
+    const text = `[MatchLink] ${ourGroup?.name ?? ''} - ${match.title} 대항전 합류 링크\n${url}`;
     await navigator.clipboard.writeText(text);
     alert('상대팀 합류 링크를 복사했어요!');
   };
@@ -226,7 +226,7 @@ export default function MatchDetail() {
   };
 
   const handleMomShare = async () => {
-    const lines = [`[MatchUp] ${match.title} MOM 🏆`];
+    const lines = [`[MatchLink] ${match.title} MOM 🏆`];
     if (winnerNames.length === 1) {
       lines.push(`${winnerNames[0]} (${momResult.max}표)`);
     } else if (winnerNames.length > 1) {

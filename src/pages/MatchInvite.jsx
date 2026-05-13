@@ -104,7 +104,7 @@ export default function MatchInvite() {
               fontFamily: '"Pretendard", -apple-system, BlinkMacSystemFont, sans-serif'
             }}
           >
-            MatchUp
+            MatchLink
           </h1>
           <p className="mt-6 text-base text-gray-700 font-medium">
             대항전 매치에 초대받았어요!

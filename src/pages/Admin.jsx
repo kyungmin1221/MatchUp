@@ -31,7 +31,7 @@ export default function Admin() {
           <ShieldCheck className="h-6 w-6" /> 가입자 관리
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          MatchUp 에 로그인한 모든 사용자 · 총 {users.length}명
+          MatchLink 에 로그인한 모든 사용자 · 총 {users.length}명
         </p>
       </div>
 

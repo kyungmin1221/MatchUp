@@ -21,7 +21,7 @@ export default function AppShell({ children }) {
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur safe-top">
         <div className="container flex h-14 items-center justify-between">
           <Link to="/groups" className="font-semibold tracking-tight">
-            MatchUp
+            MatchLink
           </Link>
           {user && (
             <div className="flex items-center gap-2">

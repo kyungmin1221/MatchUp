@@ -76,7 +76,7 @@ export default function GroupDetail() {
   const copyInvite = async () => {
     if (!group) return;
     const url = `${window.location.origin}/join?code=${group.inviteCode}`;
-    const text = `[MatchUp] "${group.name}" 그룹에 초대합니다.\n초대 코드: ${group.inviteCode}\n앱 열기: ${url}`;
+    const text = `[MatchLink] "${group.name}" 그룹에 초대합니다.\n초대 코드: ${group.inviteCode}\n앱 열기: ${url}`;
     await navigator.clipboard.writeText(text);
     alert('초대 메시지를 복사했어요. 친구에게 붙여넣기해서 보내주세요.');
   };

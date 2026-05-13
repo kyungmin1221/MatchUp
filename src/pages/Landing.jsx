@@ -72,7 +72,7 @@ export default function Landing() {
               '"Pretendard", -apple-system, BlinkMacSystemFont, sans-serif',
           }}
         >
-          MatchUp
+          MatchLink
         </h1>
         <p className="mt-6 text-base text-gray-500">
           단톡에 흩어진 풋살 & 축구 약속,

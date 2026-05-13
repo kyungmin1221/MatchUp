@@ -36,7 +36,7 @@ export default function PaymentCard({
   }
 
   const perPerson = computePerPerson(payment.totalCost, splitCount);
-  const memo = payment.memo || matchTitle || 'MatchUp 회비';
+  const memo = payment.memo || matchTitle || 'MatchLink 회비';
 
   const tossLink = buildTossLink({
     bank: payment.bank,
