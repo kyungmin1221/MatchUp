@@ -34,6 +34,20 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
+            // HTML 페이지(SPA 네비게이션) → NetworkFirst.
+            // 새 빌드가 배포되면 SW 업데이트를 기다리지 않고 다음 페이지 진입 시 즉시 최신 HTML 을 받음.
+            // 오프라인 시 2초 안에 네트워크 실패 → 캐시된 마지막 HTML 폴백.
+            // 이게 없으면 옛 SW 가 precache 된 옛 index.html 을 CacheFirst 로 계속 서빙해서
+            // 로그아웃→리다이렉트→로그인 동안 옛 화면이 보이는 문제가 생김.
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-shell',
+              networkTimeoutSeconds: 2,
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 }
+            }
+          },
+          {
             urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*$/,
             handler: 'NetworkFirst',
             options: {
