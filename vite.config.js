@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'icon_180.png', 'icon_192.png'],
+      includeAssets: ['icon.svg', 'icon_180.png', 'icon_192.png', 'icon_512.png'],
       manifest: {
         name: 'MatchLink',
         short_name: 'MatchLink',
@@ -22,7 +22,9 @@ export default defineConfig({
         categories: ['sports', 'social', 'lifestyle'],
         icons: [
           { src: '/icon_192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/icon_192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' }
+          { src: '/icon_192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: '/icon_512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icon_512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       },
       workbox: {
