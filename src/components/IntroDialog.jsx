@@ -75,9 +75,9 @@ export default function IntroDialog({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl">사용자 가이드</DialogTitle>
+          <DialogTitle className="text-xl">MatchLink, 이렇게 쓰면 돼요</DialogTitle>
           <DialogDescription>
-            단톡방에 흩어지는 정보를 한곳에 모으는 서비스예요.
+            단톡방에 흩어지던 풋살·축구 약속을 한 곳에 모아둘게요. 1분만 봐주세요!
           </DialogDescription>
         </DialogHeader>
 
@@ -122,10 +122,14 @@ export default function IntroDialog({ open, onOpenChange }) {
           ))}
         </div>
 
-        <p className="rounded-md border border-primary/40 bg-primary/5 p-3 text-xs">
-          <span className="font-medium">처음이라면</span> 위쪽의 <strong>새 매치</strong> 또는{' '}
-          <strong>새 투표 → 참석 의향 모집</strong>부터 만들어 보세요. 친구는 매치/투표 카드의
-          참석 버튼만 누르면 OK.
+        <p className="rounded-md border border-primary/40 bg-primary/5 p-3 text-xs leading-relaxed">
+          <span className="font-medium">🎬 처음이라면</span> 위쪽의{' '}
+          <strong>새 매치</strong> 또는 <strong>새 투표 → 참석 의향 모집</strong>부터
+          만들어 보세요. 친구는 매치·투표 카드의 참석 버튼만 누르면 끝!
+          <br />
+          <span className="mt-1 inline-block text-muted-foreground">
+            💡 혼자 매치 한 번 만들어보고 친구 부르셔도 돼요. 부담 없이 시작!
+          </span>
         </p>
 
         <DialogFooter>

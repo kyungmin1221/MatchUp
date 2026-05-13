@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   BookOpen,
@@ -15,6 +15,7 @@ import PollCard from '@/components/PollCard';
 import CreatePollDialog from '@/components/CreatePollDialog';
 import CreateMatchDialog from '@/components/CreateMatchDialog';
 import IntroDialog, { hasSeenIntro, markIntroSeen } from '@/components/IntroDialog';
+import InviteShareDialog from '@/components/InviteShareDialog';
 import MembersDialog from '@/components/MembersDialog';
 import KickoffHero from '@/components/KickoffHero';
 import { getMomPhase, tallyMom } from '@/features/match/mom';
@@ -33,6 +34,7 @@ import { formatDateTime } from '@/lib/utils';
 export default function GroupDetail() {
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useUser();
   const { group, loading } = useGroup(groupId);
   const { polls } = useGroupPolls(groupId);
@@ -64,21 +66,29 @@ export default function GroupDetail() {
   const isOwner = !!user && group?.ownerUid === user.uid;
 
   // 처음 그룹에 들어온 사용자에게 한 번만 자동으로 가이드를 띄움
+  // 단, 방금 그룹을 만든 경우(freshlyCreated)에는 축하/공유 다이얼로그가 우선. 가이드는 다음 진입 때 보임.
   const [introOpen, setIntroOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteVariant, setInviteVariant] = useState('share');
+  const freshlyCreated = !!location.state?.freshlyCreated;
+
   useEffect(() => {
-    if (!hasSeenIntro()) {
+    if (freshlyCreated) {
+      setInviteVariant('celebration');
+      setInviteOpen(true);
+      // history state 비우기 — 새로고침 시 또 뜨지 않게
+      navigate(location.pathname, { replace: true, state: {} });
+    } else if (!hasSeenIntro()) {
       setIntroOpen(true);
       markIntroSeen();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const copyInvite = async () => {
-    if (!group) return;
-    const url = `${window.location.origin}/join?code=${group.inviteCode}`;
-    const text = `[MatchLink] "${group.name}" 그룹에 초대합니다.\n초대 코드: ${group.inviteCode}\n앱 열기: ${url}`;
-    await navigator.clipboard.writeText(text);
-    alert('초대 메시지를 복사했어요. 친구에게 붙여넣기해서 보내주세요.');
+  const openShareDialog = () => {
+    setInviteVariant('share');
+    setInviteOpen(true);
   };
 
   const handleDeleteGroup = async () => {
@@ -145,7 +155,7 @@ export default function GroupDetail() {
           <Button variant="outline" size="sm" onClick={() => setIntroOpen(true)}>
             <BookOpen className="mr-1 h-4 w-4" /> 가이드
           </Button>
-          <Button variant="outline" size="sm" onClick={copyInvite}>
+          <Button variant="outline" size="sm" onClick={openShareDialog}>
             <Copy className="mr-1 h-4 w-4" /> 초대 링크
           </Button>
           {isOwner ? (
@@ -306,6 +316,12 @@ export default function GroupDetail() {
       </section>
 
       <IntroDialog open={introOpen} onOpenChange={setIntroOpen} />
+      <InviteShareDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        group={group}
+        variant={inviteVariant}
+      />
     </AppShell>
   );
 }

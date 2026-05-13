@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, MessageSquare, Plus, Swords, Users } from 'lucide-react';
+import { BookOpen, MessageSquare, Plus, Swords } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import IntroDialog from '@/components/IntroDialog';
 import FeedbackDialog from '@/components/FeedbackDialog';
@@ -54,7 +54,8 @@ export default function Groups() {
       const groupId = await createGroup({ name: name.trim(), ownerUid: user.uid });
       setCreateOpen(false);
       setName('');
-      navigate(`/groups/${groupId}`);
+      // freshlyCreated 시그널 — GroupDetail 이 자동으로 초대 메시지 미리보기 다이얼로그를 띄움
+      navigate(`/groups/${groupId}`, { state: { freshlyCreated: true } });
     } catch (err) {
       alert(err.message);
     }
@@ -142,17 +143,53 @@ export default function Groups() {
       {loading ? (
         <p className="text-base text-muted-foreground">불러오는 중…</p>
       ) : groups.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
-            <Users className="h-12 w-12 text-muted-foreground" />
-            <div className="space-y-1">
-              <p className="text-lg font-medium">아직 그룹이 없어요</p>
-              <p className="text-base text-muted-foreground">
-                새 그룹을 만들거나 친구의 초대 코드로 참여하세요.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <div className="text-center">
+            <p className="text-2xl">👋</p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight">
+              어서오세요!
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              친구들과 풋살·축구 모임을 한곳에 모으는 곳이에요.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              className="group flex flex-col items-start gap-2 rounded-xl border-2 border-primary/40 bg-primary/5 p-5 text-left transition hover:border-primary hover:bg-primary/10"
+            >
+              <span className="text-3xl">⚽</span>
+              <span className="text-base font-bold text-foreground">새 그룹 만들기</span>
+              <span className="text-xs text-muted-foreground">
+                정기 풋살팟 · 사내 축구회 등 친구 모임. 친구는 나중에 초대해도 OK.
+              </span>
+              <span className="mt-1 text-xs font-semibold text-primary">
+                시작하기 →
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setJoinOpen(true)}
+              className="group flex flex-col items-start gap-2 rounded-xl border-2 border-border bg-background p-5 text-left transition hover:border-primary/40 hover:bg-secondary/30"
+            >
+              <span className="text-3xl">📨</span>
+              <span className="text-base font-bold text-foreground">초대 코드로 참여</span>
+              <span className="text-xs text-muted-foreground">
+                친구한테 받은 초대 코드(예: ABC123)가 있다면 여기로.
+              </span>
+              <span className="mt-1 text-xs font-semibold text-foreground/70">
+                코드 입력하기 →
+              </span>
+            </button>
+          </div>
+
+          <p className="rounded-md border border-border bg-secondary/30 p-3 text-center text-xs text-muted-foreground">
+            💡 혼자서 매치를 한 번 만들어보고 그 다음에 친구를 불러도 돼요. 부담 없이 시작해보세요.
+          </p>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {groups.map((g) => (
