@@ -32,3 +32,15 @@ export function toDateInputValue(value) {
   const pad = (n) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+
+// Android Chrome 은 Vibration API 지원, iOS Safari 는 미지원 (no-op).
+// 드래그 드롭·중요한 토글 등 액션이 "확정"되는 순간에만 호출.
+export function haptic(pattern = 10) {
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    try {
+      navigator.vibrate(pattern);
+    } catch {
+      // 사용자가 사이트 진동을 막아둔 경우 등 — silently ignore
+    }
+  }
+}

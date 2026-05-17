@@ -238,8 +238,22 @@ export default function GroupDetail() {
         </div>
         {matches.length === 0 ? (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              예정된 매치가 없어요.
+            <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+              <EmptyMatchIllustration />
+              <div className="space-y-1">
+                <p className="font-medium">아직 만든 매치가 없어요</p>
+                <p className="text-sm text-muted-foreground">
+                  첫 매치를 만들고 친구들을 초대해보세요
+                </p>
+              </div>
+              <CreateMatchDialog
+                groupId={groupId}
+                trigger={
+                  <Button size="sm">
+                    <Plus className="mr-1 h-4 w-4" /> 첫 매치 만들기
+                  </Button>
+                }
+              />
             </CardContent>
           </Card>
         ) : (
@@ -323,5 +337,46 @@ export default function GroupDetail() {
         variant={inviteVariant}
       />
     </AppShell>
+  );
+}
+
+function EmptyMatchIllustration() {
+  return (
+    <svg
+      viewBox="0 0 180 130"
+      className="h-24 w-auto"
+      aria-hidden="true"
+    >
+      {/* 잔디 그림자 */}
+      <ellipse cx="90" cy="115" rx="60" ry="6" fill="hsl(142 60% 40% / 0.18)" />
+      {/* 페널티 박스 라인 (낮은 대비) */}
+      <path
+        d="M30 110 L30 75 L150 75 L150 110"
+        fill="none"
+        stroke="hsl(142 50% 40% / 0.35)"
+        strokeWidth="1"
+        strokeDasharray="3 3"
+      />
+      {/* 공 */}
+      <circle
+        cx="90"
+        cy="62"
+        r="32"
+        fill="white"
+        stroke="hsl(220 25% 20%)"
+        strokeWidth="2.5"
+      />
+      {/* 중앙 오각형 */}
+      <path
+        d="M90 44 L106 56 L100 75 L80 75 L74 56 Z"
+        fill="hsl(220 25% 20%)"
+      />
+      {/* 외곽 솔기 */}
+      <path d="M90 44 L90 28" stroke="hsl(220 25% 20%)" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M106 56 L120 53" stroke="hsl(220 25% 20%)" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M100 75 L110 90" stroke="hsl(220 25% 20%)" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M80 75 L70 90" stroke="hsl(220 25% 20%)" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M74 56 L60 53" stroke="hsl(220 25% 20%)" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
   );
 }

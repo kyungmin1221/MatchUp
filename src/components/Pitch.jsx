@@ -9,7 +9,7 @@ import {
   useSensors
 } from '@dnd-kit/core';
 import { Avatar } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { cn, haptic } from '@/lib/utils';
 
 function Slot({ slot, player, readOnly, selected, isAnySelected, onTap }) {
   const { setNodeRef: setDropRef, isOver } = useDroppable({
@@ -135,10 +135,12 @@ export default function Pitch({ formation, players = [], onChange, readOnly = fa
       if (fromSlotId && p.slotId === fromSlotId) return { ...p, playerUid: targetUid };
       return p;
     });
+    haptic(12);
     onChange?.({ ...formation, positions: next });
   };
 
   const removePlayerToBench = (fromSlotId) => {
+    haptic(12);
     onChange?.({
       ...formation,
       positions: formation.positions.map((p) =>
