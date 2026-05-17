@@ -34,6 +34,25 @@
     -webkit-font-smoothing: antialiased;
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+
+  /* iOS Safari 의 datetime-local / date / time 이 기본 내부 padding 과 min-width
+     때문에 다른 input 보다 가로폭이 커지는 문제 reset. -webkit-appearance: none 으로
+     OS 기본 스타일을 끄되 native picker (탭하면 휠) 는 그대로 동작함. */
+  input[type='datetime-local'],
+  input[type='date'],
+  input[type='time'] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.5rem;
+  }
+  input[type='datetime-local']::-webkit-date-and-time-value,
+  input[type='date']::-webkit-date-and-time-value,
+  input[type='time']::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.25rem;
+  }
 }
 
 @layer utilities {
