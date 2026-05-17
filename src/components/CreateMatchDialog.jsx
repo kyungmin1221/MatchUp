@@ -30,7 +30,8 @@ export default function CreateMatchDialog({
 
   const [kind, setKind] = useState('football');
   const [title, setTitle] = useState(fromPoll?.title ?? '');
-  const [scheduledAt, setScheduledAt] = useState('');
+  const [matchDate, setMatchDate] = useState('');
+  const [matchTime, setMatchTime] = useState('');
   const [location, setLocation] = useState('');
   const [teamName, setTeamName] = useState('');
   const [opponentTeamName, setOpponentTeamName] = useState('');
@@ -46,10 +47,13 @@ export default function CreateMatchDialog({
     }
     setSubmitting(true);
     try {
+      const scheduledAt = matchDate
+        ? `${matchDate}T${matchTime || '19:00'}`
+        : null;
       const common = {
         groupId,
         title: title.trim(),
-        scheduledAt: scheduledAt || null,
+        scheduledAt,
         location: location.trim(),
         teamName: teamName.trim() || '우리 팀',
         opponentTeamName: opponentTeamName.trim() || '상대팀',
@@ -122,15 +126,25 @@ export default function CreateMatchDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="match-when">일시</Label>
-            <Input
-              id="match-when"
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-              className="min-w-0 max-w-full"
-            />
-            <p className="text-xs text-muted-foreground">예) 2026-06-12 오후 7:30</p>
+            <Label htmlFor="match-date">일시</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                id="match-date"
+                type="date"
+                value={matchDate}
+                onChange={(e) => setMatchDate(e.target.value)}
+                aria-label="날짜"
+                className="min-w-0"
+              />
+              <Input
+                id="match-time"
+                type="time"
+                value={matchTime}
+                onChange={(e) => setMatchTime(e.target.value)}
+                aria-label="시간"
+                className="min-w-0"
+              />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="match-location">장소</Label>
