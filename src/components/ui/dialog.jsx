@@ -30,7 +30,7 @@ export const DialogContent = forwardRef(({ className, children, ...props }, ref)
       )}
       {...props}
     >
-      <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto overscroll-contain p-6">
+      <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto overflow-x-hidden overscroll-contain p-6 [touch-action:pan-y]">
         {children}
       </div>
       <DialogPrimitive.Close className="absolute right-3 top-3 z-10 rounded-full bg-card/90 p-1.5 opacity-80 ring-offset-background backdrop-blur-sm transition-opacity hover:opacity-100 focus:outline-none">

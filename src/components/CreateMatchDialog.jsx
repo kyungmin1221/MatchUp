@@ -128,7 +128,9 @@ export default function CreateMatchDialog({
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
+              className="min-w-0 max-w-full"
             />
+            <p className="text-xs text-muted-foreground">예) 2026-06-12 오후 7:30</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="match-location">장소</Label>
