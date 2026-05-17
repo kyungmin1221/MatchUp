@@ -5,7 +5,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App.jsx';
 import ErrorBoundary from './components/ErrorBoundary';
+import { initTheme } from './lib/theme';
 import './index.css';
+
+// system 모드 사용자가 OS 다크 ↔ 라이트 토글하면 자동 반영되도록 리스너 등록.
+// (첫 라운드 클래스 적용은 index.html 의 인라인 스크립트가 처리)
+initTheme();
 
 // PWA 서비스 워커 명시적 등록.
 // 새 빌드 감지 시 자동으로 skipWaiting → 새 SW 활성화 → 페이지 재로드.
@@ -83,6 +88,9 @@ if (typeof window !== 'undefined') {
       // 네트워크 실패 — 다음 체크 때 재시도
     }
   }
+
+  // 외부에서도 호출 가능하도록 노출 (PullToRefresh 가 끌어내림 시 한 번 더 체크)
+  window.__matchupCheckVersion = checkVersion;
 
   // 시작 후 5초 뒤 첫 체크 (초기 부담 줄이기), 그 후 30초 간격
   setTimeout(checkVersion, 5000);

@@ -6,9 +6,25 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icon_192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icon_180.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
     <meta name="description" content="친구들과 풋살/축구 모임을 한 곳에서 관리하는 PWA" />
     <title>MatchLink</title>
+    <script>
+      // 다크모드 적용을 CSS 로드 + React 마운트 전에 처리 → 흰 화면 깜빡임(FOUC) 방지.
+      // 저장된 사용자 선호 우선, 없으면 OS prefers-color-scheme 따라감.
+      (function () {
+        try {
+          var pref = localStorage.getItem('matchup.theme');
+          var dark =
+            pref === 'dark' ||
+            (pref !== 'light' &&
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

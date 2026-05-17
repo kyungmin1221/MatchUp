@@ -1,15 +1,21 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, RefreshCw, ShieldCheck } from 'lucide-react';
+import { LogOut, Monitor, Moon, RefreshCw, ShieldCheck, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
+import PullToRefresh from '@/components/PullToRefresh';
 import { useUser } from '@/features/auth/hooks';
 import { useIsAdmin } from '@/features/admin/hooks';
 import { signOut } from '@/features/auth/api';
+import { useThemePref } from '@/lib/theme';
 
-export default function AppShell({ children }) {
+const THEME_CYCLE = { system: 'light', light: 'dark', dark: 'system' };
+const THEME_LABEL = { system: '시스템 따라감', light: '라이트', dark: '다크' };
+
+export default function AppShell({ children, onRefresh, pullToRefresh = true }) {
   const user = useUser();
   const navigate = useNavigate();
   const isAdmin = useIsAdmin(user?.uid);
+  const { pref: themePref, setPref: setThemePref } = useThemePref();
 
   const handleSignOut = async () => {
     await signOut();
@@ -23,6 +29,9 @@ export default function AppShell({ children }) {
       window.location.reload();
     }
   };
+
+  const cycleTheme = () => setThemePref(THEME_CYCLE[themePref] ?? 'system');
+  const ThemeIcon = themePref === 'dark' ? Moon : themePref === 'light' ? Sun : Monitor;
 
   return (
     <div className="min-h-screen min-h-[100dvh] flex flex-col">
@@ -40,6 +49,15 @@ export default function AppShell({ children }) {
                   </Button>
                 </Link>
               )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={cycleTheme}
+                aria-label={`테마: ${THEME_LABEL[themePref]} · 탭해서 변경`}
+                title={`테마: ${THEME_LABEL[themePref]}`}
+              >
+                <ThemeIcon className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -65,7 +83,13 @@ export default function AppShell({ children }) {
           )}
         </div>
       </header>
-      <main className="flex-1 container pt-6 safe-bottom">{children}</main>
+      <main className="flex-1 container pt-6 safe-bottom">
+        {pullToRefresh ? (
+          <PullToRefresh onRefresh={onRefresh}>{children}</PullToRefresh>
+        ) : (
+          children
+        )}
+      </main>
     </div>
   );
 }

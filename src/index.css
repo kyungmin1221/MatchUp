@@ -25,6 +25,27 @@
     --radius: 0.6rem;
   }
 
+  .dark {
+    /* 어두운 청회색 베이스 + 카드를 한 단계 밝게. */
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
+    --card: 222 40% 12%;
+    --card-foreground: 210 40% 96%;
+    --primary: 142 65% 50%;
+    --primary-foreground: 222 47% 8%;
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 222 30% 18%;
+    --muted-foreground: 215 16% 70%;
+    --accent: 222 30% 18%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 217 18% 24%;
+    --input: 217 18% 24%;
+    --ring: 142 65% 50%;
+  }
+
   * {
     @apply border-border;
   }
