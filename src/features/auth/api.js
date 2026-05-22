@@ -1,12 +1,50 @@
-import { signInWithPopup, signOut as fbSignOut } from 'firebase/auth';
+import {
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut as fbSignOut
+} from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 
+// iOS PWA standalone 모드에서는 window.open() 이 막혀서 signInWithPopup 이 조용히 실패한다.
+// 이 환경에선 signInWithRedirect 로 폴백.
+function isStandalonePWA() {
+  if (typeof window === 'undefined') return false;
+  try {
+    return (
+      window.matchMedia?.('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function signInWithGoogle() {
   if (!auth || !googleProvider) throw new Error('Firebase가 설정되지 않았어요.');
+  if (isStandalonePWA()) {
+    // redirect 흐름: 페이지가 떠나고 다시 돌아온 뒤 completeGoogleRedirect 가 마무리.
+    await signInWithRedirect(auth, googleProvider);
+    return null;
+  }
   const result = await signInWithPopup(auth, googleProvider);
   await ensureUserDoc(result.user);
   return result.user;
+}
+
+// 앱 마운트 시 한 번 호출. redirect 로그인에서 돌아온 직후라면 user doc 보강.
+// 결과 자체는 onAuthStateChanged 가 자동으로 픽업하므로 별도 navigate 불필요.
+export async function completeGoogleRedirect() {
+  if (!auth) return;
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      await ensureUserDoc(result.user);
+    }
+  } catch (e) {
+    console.error('[auth] getRedirectResult failed', e);
+  }
 }
 
 export async function signOut() {

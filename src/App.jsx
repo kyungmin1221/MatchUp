@@ -4,6 +4,8 @@ import SetupGuide from './components/SetupGuide';
 import InstallPrompt from './components/InstallPrompt';
 import InAppBrowserGuide from './components/InAppBrowserGuide';
 import { useAuthListener } from '@/features/auth/hooks';
+import { completeGoogleRedirect } from '@/features/auth/api';
+import { preloadKakaoSdk } from '@/features/auth/kakao';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import { detectInAppBrowser } from '@/lib/inAppBrowser';
 
@@ -18,6 +20,13 @@ export default function App() {
     setVH();
     window.addEventListener('resize', setVH);
     return () => window.removeEventListener('resize', setVH);
+  }, []);
+
+  // PWA standalone 에서 Google 로그인은 popup 대신 redirect 를 사용 → 돌아온 직후 결과를 마무리.
+  // Kakao SDK 도 미리 로드해서 클릭 시 동기적으로 navigate 가능하도록.
+  useEffect(() => {
+    completeGoogleRedirect();
+    preloadKakaoSdk();
   }, []);
 
   if (!isFirebaseConfigured) return <SetupGuide />;
