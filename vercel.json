@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://matchup-8165b.firebaseapp.com/__/auth/:path*"
+    },
     { "source": "/((?!api|assets|icons|.*\\..*).*)", "destination": "/" }
   ],
   "headers": [

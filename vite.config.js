@@ -53,7 +53,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
         globIgnores: ['version.json'],
-        navigateFallbackDenylist: [/^\/api/, /^\/version\.json/],
+        // /__/auth/* 는 Firebase Auth handler 프록시 — SW 가 가로채면 redirect 흐름이 깨짐.
+        navigateFallbackDenylist: [/^\/api/, /^\/version\.json/, /^\/__\/auth/],
         // 새 빌드 감지 시 즉시 활성화 + 모든 탭 즉시 새 SW 가 제어 + 옛 캐시 청소
         skipWaiting: true,
         clientsClaim: true,
@@ -70,7 +71,9 @@ export default defineConfig({
             // 오프라인 시 2초 안에 네트워크 실패 → 캐시된 마지막 HTML 폴백.
             // 이게 없으면 옛 SW 가 precache 된 옛 index.html 을 CacheFirst 로 계속 서빙해서
             // 로그아웃→리다이렉트→로그인 동안 옛 화면이 보이는 문제가 생김.
-            urlPattern: ({ request }) => request.mode === 'navigate',
+            // /__/auth/* 는 Firebase Auth handler 프록시이므로 절대 캐시 안 함 (redirect 흐름 보존).
+            urlPattern: ({ request, url }) =>
+              request.mode === 'navigate' && !url.pathname.startsWith('/__/auth/'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'html-shell',
